@@ -14,13 +14,10 @@ createBuffers <- function(spFile, spOutFile, bDist, resol) {
   rs[] <- 1
   
 	#bDist must be in meters
-	#spFile <- paste(spDir, "//species_", spID, ".csv", sep="")
 	
 	if (file.exists(spFile)) {
 		
-		cat('Processing...', "\n")
-		
-		#spOutFile <- paste(outDir, "//buffer_", spID, ".asc", sep="")
+		cat('Buffering...', "\n")
 		
 		if (!file.exists(spOutFile)) {
 			spData <- read.csv(spFile)
