@@ -1,16 +1,9 @@
+#Creates a buffer area around a set of sampling points (lat/lon). As it is from points, the areas are circular. You should define a buffer distance (bDist) in meters (do not worry whether your data is in lat/lon), the raster package will handle everything with transformations between these distances. 
+
+#Resolution (resol) should be in degree. spFile is the input occurrences file (ID, Lon, Lat), and spOutFile is the name of your ASCIIGrid file (raster).
+
 require(rgdal)
 require(raster)
-
-#baseDir <- "C://CIAT_work//GBIF_project//AmysVisit"
-#baseOutDir <- "C://CIAT_work//GBIF_project//AmysVisit"
-
-#outDir <- paste(baseOutDir, "//500km_buffers", sep="")
-
-#if (!file.exists(outDir)) {
-#	dir.create(outDir)
-#}
-
-#spDir <- paste(baseDir, "//per_sp_csv", sep="")
 
 createBuffers <- function(spFile, spOutFile, bDist, resol) {
   
