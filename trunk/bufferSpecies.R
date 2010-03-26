@@ -34,7 +34,6 @@ createBuffers <- function(spFile, spOutFile, bDist, resol) {
 			dataType(rsdf) <- 'INT1U'
 			
 			rsdf <- writeRaster(rsdf, spOutFile, format='ascii', datatype='INT1U', overwrite=T)
-			#rm(rsdf)
 			rm(rsd)
 		} else {
       rsdf <- raster(spOutFile)
