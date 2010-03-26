@@ -71,17 +71,6 @@ theEntireProcess <- function(spID) {
   
   cat("Taxon ", spID, "\n")
   
-  #The tracking matrix
-  
-  tMtx <- as.data.frame(matrix(ncol=3, nrow=26))
-  names(tMtx) <- c("Step", "Date", "Species")
-  
-  #0. Setting initial stuff
-  
-  tMtx[1,1] <- "Beginning"
-  tMtx[1,2] <- date()
-  tMtx[1,3] <- spID
-  
   #1. Load species data
   
   occFile <- paste(inputDir, "//occurrences//species_", spID, ".csv", sep="")
@@ -106,18 +95,10 @@ theEntireProcess <- function(spID) {
     outFileName <- paste(inputDir, "//samples_with_data//species_", spID, "_swd.csv", sep="")
     outExtracted <- extractClimates(occFile, outFileName, inTrainClimDir, layers=layList)
     
-    tMtx[2,1] <- "EV data extracted"
-    tMtx[2,2] <- date()
-    tMtx[2,3] <- spID
-    
     #3. Select background area
     
     backFile <- paste(inputDir, "//background//background_", spID, ".csv", sep="")
     backGround <- selectBack(occFile, backFile, backgroundDir)
-    
-    tMtx[3,1] <- "Background selected"
-    tMtx[3,2] <- date()
-    tMtx[3,3] <- spID
     
     #3.1 Extracting environmental data for the background
     
@@ -156,10 +137,6 @@ theEntireProcess <- function(spID) {
       cat("Error in computing", "\n")
     }
     
-    tMtx[4,1] <- "Model done"
-    tMtx[4,2] <- date()
-    tMtx[4,3] <- spID
-    
     #5. Getting the metrics
     
     out <- getMetrics(paste(outName, "//crossval", sep=""), paste("species_", spID, sep=""), 10, paste(outName, "//model", sep=""), paste(outName, "//metrics", sep=""))
@@ -171,6 +148,8 @@ theEntireProcess <- function(spID) {
     lambdaFile <- paste(outName, "//model//species_", spID, ".lambdas", sep="")
     
     system(paste("java", "-mx512m", "-cp", maxentApp, "density.Project", lambdaFile, inTrainClimDir, outGrid, "nowarnings", "fadebyclamping", "-r", "-a", "-z"), wait=TRUE)
+    
+    
     
     system(paste("7za", "a", "-tzip", outGrid, paste(outGrid, ".asc", sep="")))
     system(paste("7za", "a", "-tzip", clampGrid, paste(clampGrid, ".asc", sep="")))
@@ -200,9 +179,6 @@ theEntireProcess <- function(spID) {
       
       if (file.exists(paste(outGrid, ".asc", sep=""))) {
         cat("Projection is OK!", "\n")
-        tMtx[(4+prjCount),1] <- paste("Projection_", suffix, sep="")
-        tMtx[(4+prjCount),2] <- date()
-        tMtx[(4+prjCount),3] <- spID
       } else {
         cat("Error in projecting", "\n")
       }
@@ -213,10 +189,6 @@ theEntireProcess <- function(spID) {
     
     bufferOutGrid <- paste(outName, "//projections//sp_", spID, "_buffer.asc", sep="")
     bfo <- createBuffers(occFile, bufferOutGrid, 500000, 0.5)
-    
-    tMtx[27,1] <- "Buffering"
-    tMtx[27,2] <- date()
-    tMtx[27,3] <- spID
     
     outm <- write.csv(tMtx, file=paste(inputDir, "//timingfiles//timing_", spID, ".csv", sep=""), quote=F, row.names=F)
     rm(tMtx)
