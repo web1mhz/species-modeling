@@ -1,4 +1,4 @@
-#To get and store in a csv (comma separated values) file the set of evaluation metrics and the thresholds that are likely to be used for model development.
+#To get and store in a csv (comma separated values) file the set of evaluation metrics and the thresholds that are likely to be used for model development. This is specific for the case when you have presence-only data, and have used a cross-validation approach, plus a model building using all the data.
 
 getMetrics <- function(crossValDir, foldSuffix, nFolds, absRunDir, outMetDir) {
   
