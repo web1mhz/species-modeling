@@ -22,12 +22,7 @@ createBuffers <- function(spFile, spOutFile, bDist, resol) {
 		if (!file.exists(spOutFile)) {
 			spData <- read.csv(spFile)
 			
-			xMax <- max(spData$Longitude) + (bDist/111190)*1.5
-			xMin <- min(spData$Longitude) - (bDist/111190)*1.5
-			yMax <- max(spData$Latitude) + (bDist/111190)*1.5
-			yMin <- min(spData$Latitude) - (bDist/111190)*1.5
-			
-			bb <- extent(xMin, xMax, yMin, yMax)
+			bb <- extent(-180, 180, -56, 84)
       rs <- crop(rs, bb)
       
       rsd <- distanceFromPoints(rs, spData[,2:3])
