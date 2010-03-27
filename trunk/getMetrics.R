@@ -171,7 +171,7 @@ getMetrics <- function(crossValDir, foldSuffix, nFolds, absRunDir, outMetDir) {
   #The thresholds matrix and output file
   
   threshMatrix <- as.data.frame(matrix(ncol=13, nrow=1))
-  names(threshMatrix) <- c("TemPercentile", "TenPercentileSD", "Prevalence", "PrevalenceSD", "FixedValue", "MaxTrainSensSpec", "MaxTrainSesnsSpecSD", "EqualTrainSensSpec", "EqualTrainSensSpecSD", "BalanceTrainOmission", "BalanceTrainOmissionSD", "UpperLeftROC", "UpperLeftROCSD")
+  names(threshMatrix) <- c("TenPercentile", "TenPercentileSD", "Prevalence", "PrevalenceSD", "FixedValue", "MaxTrainSensSpec", "MaxTrainSesnsSpecSD", "EqualTrainSensSpec", "EqualTrainSensSpecSD", "BalanceTrainOmission", "BalanceTrainOmissionSD", "UpperLeftROC", "UpperLeftROCSD")
   
   threshMatrix[1,1] <- tpThreshAvg
   threshMatrix[1,2] <- tpThreshStd
