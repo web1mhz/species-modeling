@@ -141,6 +141,12 @@ theEntireProcess <- function(spID) {
     
     out <- getMetrics(paste(outName, "//crossval", sep=""), paste("species_", spID, sep=""), 10, paste(outName, "//model", sep=""), paste(outName, "//metrics", sep=""))
     
+    #9. Create the buffer area
+    
+    bufferOutGrid <- paste(outName, "//projections//sp_", spID, "_buffer.asc", sep="")
+    bfo <- createBuffers(occFile, bufferOutGrid, 500000, 0.5)
+    bufferRaster <- raster(bufferOutGrid)
+    
     #6. Projecting the model into worldclim
     
     outGrid <- paste(outName, "//projections//sp_", spID, "_5kmwcl", sep="")
@@ -151,8 +157,6 @@ theEntireProcess <- function(spID) {
     
     threshFile <- paste(outName, "//metrics//thresholds.csv", sep="")
     threshData <- read.csv(threshFile)
-    
-    
     
     system(paste("7za", "a", "-tzip", outGrid, paste(outGrid, ".asc", sep="")))
     system(paste("7za", "a", "-tzip", clampGrid, paste(clampGrid, ".asc", sep="")))
@@ -179,6 +183,54 @@ theEntireProcess <- function(spID) {
       lambdaFile <- paste(outName, "//model//species_", spID, ".lambdas", sep="")
       
       system(paste("java", "-mx512m", "-cp", maxentApp, "density.Project", lambdaFile, projLayers, outGrid, "nowarnings", "fadebyclamping", "-r", "-a", "-z"), wait=TRUE)
+       
+      thslds <- c("TenPercentile_1", "Prevalence_3", "FixedValue_5", "MaxTrainSensSpec_6", "EqualTrainSensSpec_8", "BalanceTrainOmission_10", "UpperLeftROC_12")
+      
+      prjRaster <- raster(paste(outName, "//projections//sp_", spID, "_", suffix, ".asc", sep=""))
+      
+      procThr <- 1
+      for(thr in thslds) {
+        
+        #Multi threshold PA surfaces for baseline
+        if (prjCount == 1) {
+          cat("Thresholding and buffering... \n")
+          
+          theRaster <- prjRaster
+          theRaster <- theRaster * bufferRaster
+          
+          theName <- strsplit(thr, "_")[[1]][1]
+          thePos <- as.numeric(strsplit(thr, "_")[[1]][2])
+          
+          theVal <- threshData[1,thePos]
+          
+          theRaster[which(theRaster[] < theVal)] <- 0
+    		  theRaster[which(theRaster[] != 0)] <- 1
+    		  
+    		  outRsName <- paste(outName, "//projections//sp_", spID, "_", suffix, "_", theName, ".asc", sep="")
+    		  theRaster <- writeRaster(theRaster, outRsName, overwrite=T, format='ascii')
+    		  rm(theRaster)
+          
+        } else {
+        #Multi threshold PA surfaces for future scenarios (two mig. scenarios)
+          
+          #Current 
+          
+          
+        }
+        
+        
+        theValue <- threshData$thr
+        
+        thrRaster[which(thrRaster[] <= 
+        
+        rsDistPAtp[which(rsDistPAtp[] < tenpThresh)] <- 0
+    		rsDistPAtp[which(rsDistPAtp[] != 0)] <- 1
+    		
+    		rsDistPApr[which(rsDistPApr[] < prevThresh)] <- 0
+    		rsDistPApr[which(rsDistPApr[] != 0)] <- 1
+        
+        procThr <- procThr + 1
+      }
       
       if (file.exists(paste(outGrid, ".asc", sep=""))) {
         cat("Projection is OK!", "\n")
@@ -187,14 +239,6 @@ theEntireProcess <- function(spID) {
       }
       prjCount <- prjCount + 1
     }
-    
-    #9. Create the buffer area
-    
-    bufferOutGrid <- paste(outName, "//projections//sp_", spID, "_buffer.asc", sep="")
-    bfo <- createBuffers(occFile, bufferOutGrid, 500000, 0.5)
-    
-    outm <- write.csv(tMtx, file=paste(inputDir, "//timingfiles//timing_", spID, ".csv", sep=""), quote=F, row.names=F)
-    rm(tMtx)
     
     return("Done")
   } else {
