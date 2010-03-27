@@ -134,7 +134,7 @@ theEntireProcess <- function(spID) {
     if (file.exists(paste(outName, "//model//species_", spID,".lambdas", sep=""))) {
       cat("Model done successfully!", "\n")
     } else {
-      cat("Error in computing", "\n")
+      cat("Error in computing \n")
     }
     
     #5. Getting the metrics
