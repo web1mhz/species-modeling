@@ -149,6 +149,9 @@ theEntireProcess <- function(spID) {
     
     system(paste("java", "-mx512m", "-cp", maxentApp, "density.Project", lambdaFile, inTrainClimDir, outGrid, "nowarnings", "fadebyclamping", "-r", "-a", "-z"), wait=TRUE)
     
+    threshFile <- paste(outName, "//metrics//thresholds.csv", sep="")
+    threshData <- read.csv(threshFile)
+    
     
     
     system(paste("7za", "a", "-tzip", outGrid, paste(outGrid, ".asc", sep="")))
