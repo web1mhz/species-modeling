@@ -188,20 +188,22 @@ theEntireProcess <- function(spID) {
       
       prjRaster <- raster(paste(outName, "//projections//sp_", spID, "_", suffix, ".asc", sep=""))
       
+      cat("Thresholding and buffering... \n")
+      
       procThr <- 1
       for(thr in thslds) {
         
+        theName <- strsplit(thr, "_")[[1]][1]
+        thePos <- as.numeric(strsplit(thr, "_")[[1]][2])
+          
+        theVal <- threshData[1,thePos]
+        
         #Multi threshold PA surfaces for baseline
         if (prjCount == 1) {
-          cat("Thresholding and buffering... \n")
+          cat("...", theName, "\n")
           
           theRaster <- prjRaster
           theRaster <- theRaster * bufferRaster
-          
-          theName <- strsplit(thr, "_")[[1]][1]
-          thePos <- as.numeric(strsplit(thr, "_")[[1]][2])
-          
-          theVal <- threshData[1,thePos]
           
           theRaster[which(theRaster[] < theVal)] <- 0
     		  theRaster[which(theRaster[] != 0)] <- 1
@@ -213,22 +215,30 @@ theEntireProcess <- function(spID) {
         } else {
         #Multi threshold PA surfaces for future scenarios (two mig. scenarios)
           
-          #Current 
+          #Null adaptation
           
+          cat("...", theName, "\n")
           
+          theRaster <- prjRaster
+          theRaster <- theRaster * bufferRaster
+          
+          theRaster[which(theRaster[] < theVal)] <- 0
+    		  theRaster[which(theRaster[] != 0)] <- 1
+    		  
+    		  outRsName <- paste(outName, "//projections//sp_", spID, "_", suffix, "_", theName, "_NullAdap.asc", sep="")
+    		  theRaster <- writeRaster(theRaster, outRsName, overwrite=T, format='ascii')
+    		  rm(theRaster)
+    		  
+    		  #Full adaptation
+    		  
+    		  theRaster <- prjRaster
+    		  theRaster[which(theRaster[] < theVal)] <- 0
+    		  theRaster[which(theRaster[] != 0)] <- 1
+    		  
+    		  outRsName <- paste(outName, "//projections//sp_", spID, "_", suffix, "_", theName, "_FullAdap.asc", sep="")
+    		  theRaster <- writeRaster(theRaster, outRsName, overwrite=T, format='ascii')
+    		  rm(theRaster)
         }
-        
-        
-        theValue <- threshData$thr
-        
-        thrRaster[which(thrRaster[] <= 
-        
-        rsDistPAtp[which(rsDistPAtp[] < tenpThresh)] <- 0
-    		rsDistPAtp[which(rsDistPAtp[] != 0)] <- 1
-    		
-    		rsDistPApr[which(rsDistPApr[] < prevThresh)] <- 0
-    		rsDistPApr[which(rsDistPApr[] != 0)] <- 1
-        
         procThr <- procThr + 1
       }
       
@@ -237,6 +247,11 @@ theEntireProcess <- function(spID) {
       } else {
         cat("Error in projecting", "\n")
       }
+      
+      rm(prjRaster)
+      system(paste("7za", "a", "-tzip", paste(outName, "//projections//sp_", spID, "_", suffix, sep=""), paste(outName, "//projections//sp_", spID, "_", suffix, ".asc", sep="")))
+      file.remove(paste(outName, "//projections//sp_", spID, "_", suffix, ".asc", sep=""))
+      
       prjCount <- prjCount + 1
     }
     
@@ -246,6 +261,6 @@ theEntireProcess <- function(spID) {
   }
 }
 
-for (sp in 40:42) {
+for (sp in 40:41) {
   out <- theEntireProcess(sp)
 }
