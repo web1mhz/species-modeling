@@ -2,6 +2,8 @@
 
 getMetrics <- function(crossValDir, foldSuffix, nFolds, absRunDir, outMetDir) {
   
+  cat("Metrics... \n")
+  
   nFolds <- nFolds - 1
   
   crossValMxrFile <- paste(crossValDir, "//maxentResults.csv", sep="")
