@@ -1,6 +1,6 @@
 #define some directories
 work.dir = '/homes/31/jc165798/working/wallace/'; setwd(work.dir)
-cur.asc.dir = '/homes/31/jc165798/working/wallace/current/0.01degree/ascii/'
+cur.asc.dir = '/home1/31/jc165798/working/wallace/future/current.0.1degree/ascii/'
 
 #data file
 system.time({
@@ -20,10 +20,14 @@ for (tfile in list.files(cur.asc.dir,pattern='asc.gz')) { #cycle throught and ex
 }
 bkgd = na.omit(bkgd)
 write.csv(bkgd,'bkgd.swd',row.names=F) #write out the data
+occur = na.omit(occur)
+write.csv(occur,'occur.swd',row.names=F) #write out the data
 })
 ###start setting up and running models
 #get a count of the species occurrence records
 species = unique(occur$SPPCODE)
+
+
 
 #cycle through each of the species
 for (spp in species) {
