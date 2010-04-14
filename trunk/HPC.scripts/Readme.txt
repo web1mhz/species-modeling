@@ -1,5 +1,7 @@
 this is where all scripts will be hosted to be run on the HPC
 
+THis code is designed for a ONCE-OFF run... not interactive or for updating.
+
 Psuedo-code:
 
 1. create backgrounds specific for different continents
