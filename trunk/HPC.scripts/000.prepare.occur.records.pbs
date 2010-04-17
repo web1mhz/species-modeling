@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -c s
+#PBS -j oe
+#PBS -m a
+#PBS -N prep.occur
+#PBS -M jc165798@jcu.edu.au
+#PBS -l walltime=9999:00:00
+#PBS -l nodes=1:ppn=2 
+echo "------------------------------------------------------"
+echo " This job is allocated 1 cpu on "
+cat $PBS_NODEFILE
+echo "------------------------------------------------------"
+echo "PBS: Submitted to $PBS_QUEUE@$PBS_O_HOST"
+echo "PBS: Working directory is $PBS_O_WORKDIR"
+echo "PBS: Job identifier is $PBS_JOBID"
+echo "PBS: Job name is $PBS_JOBNAME"
+echo "------------------------------------------------------"
+
+cd /homes/31/jc165798/working/Wallace.Initiative/scripts/HPC.scripts/
+
+#run the R CMD line
+R CMD BATCH 000.prepare.occur.records.R 000.prepare.occur.records.Rout --no-save
+
