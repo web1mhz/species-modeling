@@ -1,0 +1,24 @@
+Occurrences
+- files downloaded from GBIF on ???
+- cleaning was done by CIAT
+- species were assigned unique identifiers
+	- analysis was to species level with info on subspecies, etc. ignored
+- files were provided to JJV on 2010-04-17
+
+background
+- files were supplied shortly after UK meeting
+- JJV used the backselection.asc to select random background points from
+- the globe was broken up into 6 unique domains...
+	- 1 .. North America incl. Greenland
+	- 2 .. Latin America
+	- 3 .. Europe incl. Russia
+	- 4 .. Asia
+	- 5 .. Africa
+	- 6 .. Australia and New Zealand
+- 10,000 random background points were assumed to represent the each domain
+- only background points from the domains in which the species occurred were used in training the models
+	- thus species in multiple domains would have number of domains * 10000 background points
+
+Algorithm
+- Maxent was used. version 3.3.2
+
