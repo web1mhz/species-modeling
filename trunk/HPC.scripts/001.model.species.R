@@ -1,15 +1,5 @@
-#setup & load libraries needed for run
-.libPaths(c(.libPaths(),'/homes/31/jc165798/R_libraries'))
-library(SDMTools)
-
-################################################################################
-
 #define & set the working directory
 work.dir = '/homes/31/jc165798/working/Wallace.Initiative/'; setwd(work.dir)
-
-#read in the background file asc & individual domains
-bkgd = read.asc.gz('training.data/background.selection.mask.asc.gz')
-for (ii in 1:6) assign(paste('bkgd.',ii,sep=''),read.csv(paste('training.data/bkgd.domain.',ii,'.csv',sep='')))
 
 #define the projection directory
 proj.dir = '/homes/31/jc165798/working/Wallace.Initiative/projecting.data/'
@@ -28,25 +18,22 @@ sh.dir = '/homes/31/jc165798/working/Wallace.Initiative/training.data/individual
 
 #cycle through each of the models
 for (spp in species) {
-	##prepare the background file
+	cat('.')
 	occur = read.csv(paste(occur.dir,spp,'.csv',sep=''),as.is=T) #read in the occur records
-	tbkgd = extract.data(cbind(occur$lon,occur$lat),bkgd); tbkgd = na.omit(unique(tbkgd)) #get the unique domains
-	out.bkgd = NULL; for (ii in tbkgd) out.bkgd = rbind(out.bkgd,get(paste('bkgd.',ii,sep=''))) #grab the background data for the domains
-	write.csv(out.bkgd,paste(bkgd.dir,spp,'.csv',sep=''),row.names=F) #write out the data
-
 	#create a shell script for running the models
 	zz = file(paste(sh.dir,spp,'.sh',sep=''),'w')
 		cat('#create the local directory and move to it \n',file=zz)
-		cat('md /tmp/',spp,'\n',sep='',file=zz)
+		cat('mkdir /tmp/',spp,'\n',sep='',file=zz)
 		cat('cd /tmp/',spp,'\n',sep='',file=zz)
 		cat('\n',file=zz)
 		cat('#copy over the necessary files \n',file=zz)
 		cat('cp -af ',occur.dir,spp,'.csv occur.csv \n',sep='',file=zz)
 		cat('cp -af ',bkgd.dir,spp,'.csv bkgd.csv \n',sep='',file=zz)
+		cat('cp -af ',sh.dir,spp,'.sh 00.model.sh \n',sep='',file=zz)
 		cat('cp -af ',work.dir,'maxent.jar maxent.jar \n',sep='',file=zz)
 		cat('\n',file=zz)
 		cat('#create the output directory \n',file=zz)
-		cat('md output \n',sep='',file=zz)
+		cat('mkdir output \n',sep='',file=zz)
 		cat('\n',file=zz)
 		cat('# create the maxent model \n',file=zz)
 		if (nrow(occur) >= 40) { #run the maxent model once with full data and another cross validated
@@ -74,9 +61,7 @@ for (spp in species) {
 		cat('rm -rf ',spp,' \n',sep='',file=zz)
 		cat('rm -rf ',spp,'.tar.gz \n',sep='',file=zz)
 		cat('\n',file=zz)		
-		
 	close(zz)
-	
 }
 
 
