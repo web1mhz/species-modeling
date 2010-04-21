@@ -8,11 +8,8 @@ library(SDMTools)
 work.dir = '/homes/31/jc165798/working/Wallace.Initiative/'; setwd(work.dir)
 
 #define the location of the occur files and list the files
-in.dir = '/homes/31/jc165798/working/Wallace.Initiative/raw.files.20100417/'
+in.dir = '/homes/31/jc165798/working/Wallace.Initiative/raw.files.20100417/unzipped/'
 infiles.occur = list.files(in.dir,pattern='\\.csv')
-
-#define the output basedir
-base.out.dir = '/homes/31/jc165798/working/Wallace.Initiative/models/'
 
 #training data directory
 train.dir = '/homes/31/jc165798/working/Wallace.Initiative/training.data/'
@@ -23,6 +20,9 @@ enviro.layers = list.files(enviro.dir,pattern='asc.gz'); enviro.layers = gsub('\
 #load the enviro.data
 for (enviro in enviro.layers) { cat(enviro,'\n'); assign(enviro,read.asc.gz(paste(enviro.dir,enviro,'.asc.gz',sep=''))) }
 cellsize = attr(get(enviro.layers[1]),'cellsize')
+
+#define the temporary script folder
+tmp.pbs = '/homes/31/jc165798/working/Wallace.Initiative/tmp.pbs/'
 
 #cycle through each of the occurrence files
 for (infile in infiles.occur) {
@@ -41,6 +41,7 @@ for (infile in infiles.occur) {
 	#get a species list where the species counts are < 10 records
 	counts = aggregate(occur$specie_id,by=list(specie_id=occur$specie_id),length)
 	species = counts$specie_id[which(counts$x>=10)]
+	save(species,file=paste(tmp.pbs,gsub('csv','',infile),'species.Rdata',sep=''))
 	
 	#remove occur  records for species not in species list
 	occur = occur[which(occur$specie_id %in% species),]
@@ -48,14 +49,32 @@ for (infile in infiles.occur) {
 	#write out the occurrance file
 	write.csv(occur,paste(train.dir,infile,sep=''),row.names=F)#write out the occurrence records
 	
-	#cycle through each of the species
-	cnt = 0
-	for (spp in species){
-		if (cnt %% 50 == 0) { cat(round(cnt/length(species)*100,2),'%\n') } else { cat('.') }
-		out.dir = paste(base.out.dir,gsub('\\.csv','/',infile),spp,'/',sep=''); dir.create(out.dir,recursive=T) #define the output directory and create it
-		write.csv(occur[which(occur$specie_id==spp),],paste(out.dir,'occur.csv',sep=''),row.names=F) #write out the the subset of the data for the species
-		cnt = cnt + 1
-	} 
-	cat('\n')
+	#define the number of bins for running the sh scripts
+	bins = seq(1,length(species),100); bins = c(bins,length(species))
+	
+	#cycle through and submit the jobs
+	for (ii in 1:(length(bins)-1)) {
+		#create a temporary R script
+		zz = file(paste(tmp.pbs,gsub('csv','',infile),sprintf('%05i',ii),'.R',sep=''),'w')
+			cat('work.dir="/homes/31/jc165798/working/Wallace.Initiative/training.data/individual.spp.occur/"; setwd(work.dir) \n',file=zz)
+			cat('occur=read.csv("',train.dir,infile,'") \n',sep='',file=zz)
+			cat('load("',tmp.pbs,gsub('csv','',infile),'species.Rdata") \n',sep='',file=zz)
+			cat('species=species[',bins[ii],':',bins[ii+1],'] \n',sep='',file=zz)
+			cat("for (spp in species){ write.csv(occur[which(occur$specie_id==spp),],paste(spp,'.csv',sep=''),row.names=F) } \n",file=zz)
+		#close the file
+		close(zz)
+		
+		#create the job submission script
+		zz = file(paste(tmp.pbs,gsub('csv','',infile),sprintf('%05i',ii),'.sh',sep=''),'w')
+			cat('cd ',tmp.pbs,' \n',sep='',file=zz)
+			cat('R CMD BATCH ',gsub('csv','',infile),sprintf('%05i',ii),'.R ',gsub('csv','',infile),sprintf('%05i',ii),'.Rout --no-save \n',sep='',file=zz)
+		#close the file
+		close(zz)
+	}
 }
 
+#cycle through and submit all the sh scripts created
+setwd(tmp.pbs)
+sh.files = list.files(,pattern='\\.sh')
+for (sh.file in sh.files) { system(paste('qsub -l nodes=1:ppn=1 ',sh.file,sep='')); system('sleep 0.5') }
+ 
