@@ -57,6 +57,32 @@ system(paste('R CMD pdflatex ',spp,'.tex',sep=''))
 
 file.copy(paste(spp,'.pdf',sep=''),paste('/homes/31/jc165798/',spp,'.pdf',sep=''),overwrite=T)
 
+################################################################################
+#work out the summarizing and visualization script prior to use in Rnw
 
+work.dir = '/homes/31/jc165798/trial/13274112/'; setwd(work.dir)
+out.dir = paste(work.dir,'summaries/',sep=''); dir.create(out.dir) #defien the directory to put all summary information
+
+###summarize the accuracy of the models
+out = data.frame(spp = spp)
+maxent.results = read.csv('output/maxentResults.csv')
+maxent.results.cross.validate = read.csv('output/maxentResults.crossvalide.csv')
+pa = data.frame(obs=1,pred=read.csv(paste('output/',spp,'_samplePredictions.csv',sep=''))$Logistic.prediction)
+pa = rbind(pa,data.frame(obs=0,pred=read.csv(paste('output/',spp,'_backgroundPredictions.csv',sep=''))$logistic))
+#get the AUCs
+out$AUC.training = maxent.results$Training.AUC
+out$AUC.train.mean = maxent.results.cross.validate$Training.AUC[nrow(maxent.results.cross.validate)]
+out$AUC.test.mean = maxent.results.cross.validate$Test.AUC[nrow(maxent.results.cross.validate)]
+out$AUC = auc(pa$obs,pa$pred)
+#extract the variables of importance
+for (ii in grep('contrib',names(maxent.results))) out[names(maxent.results)[ii]] = maxent.results[,ii]
+#write out the data
+write.csv(out,paste(out.dir,'summary.accuracy.contributions.csv',sep=''),row.names=F)
+
+###summarize thresholds and accuracy
+out = optim.thresh(pa$obs,pa$pred)
+out = data.frame(type=names(out),accuracy(pa$obs,pa$pred,threshold=as.vector(unlist(out))))
+#write out the data
+write.csv(out,paste(out.dir,'summary.thresholds.csv',sep=''),row.names=F)
 
 
