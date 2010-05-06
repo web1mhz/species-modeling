@@ -85,4 +85,15 @@ out = data.frame(type=names(out),accuracy(pa$obs,pa$pred,threshold=as.vector(unl
 #write out the data
 write.csv(out,paste(out.dir,'summary.thresholds.csv',sep=''),row.names=F)
 
+##read in the occur data
+occur = read.csv('occur.csv')
+
+#define the convex hull
+hull = occur[chull(cbind(occur$lat,occur$lon)),2:3]
+lons = lats = NULL
+for (bear in seq(0,length=8,by=45)) {
+	tt = destination(hull$lons,hull$lats,bearings = bear,distance = 500000)
+	lons = c(lons,tt$lons2); lats = c(lats,tt$lats2)
+}
+hull.buff = chull(cbind(lats,lons))
 
