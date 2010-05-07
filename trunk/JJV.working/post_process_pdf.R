@@ -47,6 +47,8 @@ zz = file(paste(out.dir,spp,'.Rnw',sep=''),'w')
 	cat('maxent.results = read.csv("',work.dir,'output/maxentResults.csv")','\n',sep='',file=zz)
 	cat('print(maxent.results)','\n',sep='',file=zz)
 	cat('@\n','\n',sep='',file=zz)
+	cat('\\includegraphics{current.png}\n',file=zz)
+
 	cat('\\end{document}','\n',sep='',file=zz)
 close(zz)
 
@@ -82,18 +84,74 @@ write.csv(out,paste(out.dir,'summary.accuracy.contributions.csv',sep=''),row.nam
 ###summarize thresholds and accuracy
 out = optim.thresh(pa$obs,pa$pred)
 out = data.frame(type=names(out),accuracy(pa$obs,pa$pred,threshold=as.vector(unlist(out))))
+threshold = out$threshold[out$type=='min.ROC.plot.distance']
 #write out the data
 write.csv(out,paste(out.dir,'summary.thresholds.csv',sep=''),row.names=F)
 
+### create summary images & outputs
 ##read in the occur data
 occur = read.csv('occur.csv')
 
 #define the convex hull
-hull = occur[chull(cbind(occur$lat,occur$lon)),2:3]
-lons = lats = NULL
-for (bear in seq(0,length=8,by=45)) {
-	tt = destination(hull$lons,hull$lats,bearings = bear,distance = 500000)
-	lons = c(lons,tt$lons2); lats = c(lats,tt$lats2)
+hull = occur[chull(cbind(occur$lat,occur$lon)),2:3] #get the convex hull of the current occurences
+lons = lats = NULL #objects to store points buffering hull points
+for (bear in seq(0,length=360,by=1)) { #cycle through 360 directions and get points at 500 km from hull points
+	tt = destination(hull$lat,hull$lon,bearing = bear,distance = 500000)
+	lons = c(lons,tt$lon2); lats = c(lats,tt$lat2)
 }
-hull.buff = chull(cbind(lats,lons))
+hull.buff = chull(cbind(lats,lons)) #get the convex hull of the buffered points
+hull.buff = data.frame(lon = lons[hull.buff], lat = lats[hull.buff]) #get lat/long of the buffered convex hull
+
+##set some common plotting information
+legend.local = cbind(c(-130,-135,-135,-130),c(-40,-40,0,0)) 
+cols = c('gray', colorRampPalette(c('yellow','red'))(100))
+
+##read in the current distribution
+cur.asc = read.asc.gz('output/current_0.5degrees.asc.gz') #read in the data
+cur.asc[which(is.finite(cur.asc) & cur.asc<threshold)] = 0 #set everything below the threshold to 0
+#plot the current unclipped distribution
+png(paste(out.dir,'current.unclipped.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
+	par(mar=c(0,0,0,0))	
+	image(cur.asc,zlim=c(0,1),col = cols)
+	polygon(hull.buff$lon,hull.buff$lat)
+	points(occur$lon,occur$lat,pch='+')
+	legend.gradient(legend.local,cols) 
+dev.off()
+#now clip the base asc to a 500 km buffer of the convex hull
+pos = as.data.frame(which(is.finite(cur.asc) & cur.asc>=threshold, arr.ind=T)) #define the position of the potential distribution
+pos$lat = getXYcoords(cur.asc)$y[pos$col]; pos$lon = getXYcoords(cur.asc)$x[pos$row] #convert to lat & long
+pos$in.hull.buff = pnt.in.poly(cbind(pos$lon,pos$lat),cbind(hull.buff$lon,hull.buff$lat))$pip #check if lat/longs are with polygon defined by hull.buff
+cur.asc[cbind(pos$row[which(pos$in.hull.buff==0)],pos$col[which(pos$in.hull.buff==0)])] = 0 #set all values outside hull to 0
+#plot the new distribution
+png(paste(out.dir,'current.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
+	par(mar=c(0,0,0,0))	
+	image(cur.asc,zlim=c(0,1),col = c('gray',heat.colors(100)[100:1]))
+	polygon(hull.buff$lon,hull.buff$lat)
+dev.off()
+#create a mask for 'no migration' scenario
+no.migrate.mask = cur.asc; no.migrate.mask[which(is.finite(cur.asc) & cur.asc>0)] = 1 #this is an mask to apply to future scenarios
+pos = as.data.frame(which(no.migrate.mask==1,arr.ind=TRUE)) #get the positions
+pos$lat = getXYcoords(no.migrate.mask)$y[pos$col]; pos$lon = getXYcoords(no.migrate.mask)$x[pos$row] #convert to lat & long
+out = pos
+
+###process all future scenarios
+projs = list.files('output/',pattern='\\.asc.gz') #get a list of all asc.gz files
+if(length(grep('current_0.1',projs))>0) { projs = projs[-grep('current_0.1',projs)] }; projs = gsub('\\.asc.gz','',projs)
+#cycle through the projections and extract the information
+for (projx in projs) {
+	cat(projx,'\n')
+	tasc = read.asc.gz(paste('output/',projx,'.asc.gz',sep=''))#read in the data
+	tasc = tasc * no.migrate.mask #apply the no migration mask
+	tasc[which(is.finite(tasc) & tasc<threshold)] = 0 #remove anything below the threshold
+	write.asc.gz(tasc,paste(out.dir,projx,'.asc',sep='')) #write out the gis data
+	#plot the image
+	png(paste(out.dir,projx,'.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
+		par(mar=c(0,0,0,0))	
+		image(tasc,zlim=c(0,1),col = c('gray',heat.colors(100)[100:1]))
+	dev.off()
+	#track the data
+	out[projx] = extract.data(cbind(pos$lon,pos$lat),tasc)
+}
+
+
 
