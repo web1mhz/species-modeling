@@ -15,8 +15,9 @@ library(SDMTools)
 library(raster)
 source('/homes/31/jc165798/SCRIPTS/local/misc/R_scripts/PDFreports/Sweave.R')
 
-################################################################################
-#setup the constants
+###########################################################################################
+###########################################################################################
+#setup the constants / directory structure
 
 #define and set directories; extract the data to work with
 data.dir = '/data/jc165798/models/'
@@ -77,12 +78,12 @@ cols = c('gray', colorRampPalette(c('yellow','red'))(100))
 cur.asc = read.asc.gz('output/current_0.5degrees.asc.gz') #read in the data
 cur.asc[which(is.finite(cur.asc) & cur.asc<threshold)] = 0 #set everything below the threshold to 0
 #plot the current unclipped distribution
-png(paste(out.dir,'current.unclipped.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
+png(paste(out.dir,'current_unclipped.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
 	par(mar=c(0,0,0,0))	
 	image(cur.asc,zlim=c(0,1),col = cols)
 	polygon(hull.buff$lon,hull.buff$lat)
 	points(occur$lon,occur$lat,pch='+')
-	legend.gradient(legend.local,cols) 
+	legend.gradient(legend.local,cols,title='suitability') 
 dev.off()
 #now clip the base asc to a 500 km buffer of the convex hull
 pos = as.data.frame(which(is.finite(cur.asc) & cur.asc>=threshold, arr.ind=T)) #define the position of the potential distribution
@@ -94,7 +95,7 @@ png(paste(out.dir,'current.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.a
 	par(mar=c(0,0,0,0))	
 	image(cur.asc,zlim=c(0,1),col = cols)
 	polygon(hull.buff$lon,hull.buff$lat)
-	legend.gradient(legend.local,cols)
+	legend.gradient(legend.local,cols,title='suitability')
 dev.off()
 #create a mask for 'no migration' scenario
 no.migrate.mask = cur.asc; no.migrate.mask[which(is.finite(cur.asc) & cur.asc>0)] = 1 #this is an mask to apply to future scenarios
@@ -105,77 +106,93 @@ out = pos
 
 ###process all future scenarios
 projs = list.files('output/',pattern='\\.asc.gz') #get a list of all asc.gz files
-if(length(grep('current_0.1',projs))>0) { projs = projs[-grep('current_0.1',projs)] }; projs = gsub('\\.asc.gz','',projs)
+if(length(grep('current_0.1',projs))>0) { projs = projs[-grep('current_0.1',projs)] } ; projs = gsub('\\.asc.gz','',projs) 
 #cycle through the projections and extract the information
 for (projx in projs) {
 	cat(projx,'\n')
 	tasc = read.asc.gz(paste('output/',projx,'.asc.gz',sep=''))#read in the data
 	tasc = tasc * no.migrate.mask #apply the no migration mask
+	#track the data
+	out[projx] = extract.data(cbind(pos$lon,pos$lat),tasc)
 	tasc[which(is.finite(tasc) & tasc<threshold)] = 0 #remove anything below the threshold
 	#write.asc.gz(tasc,paste(out.dir,projx,'.asc',sep='')) #write out the gis data
 	#plot the image
 	png(paste(out.dir,projx,'.png',sep=''),width=dim(cur.asc)[1]*2,height=dim(cur.asc)[2]*2)
 		par(mar=c(0,0,0,0))	
 		image(tasc,zlim=c(0,1),col = c('gray',heat.colors(100)[100:1]))
+		legend.gradient(legend.local,cols,title='suitability')
 	dev.off()
-	#track the data
-	out[projx] = extract.data(cbind(pos$lon,pos$lat),tasc)
 }
 
 ###summarize changes
 #get sum & sd of 2020, 2050 & 2080
-out.binary = as.matrix(out[,5:length(out)]); out.binary[which(out.binary>0)] = 1 
-out$mean.2020 = rowMeans(out.binary[,grep('_2020_',colnames(out.binary))])
-out$mean.2050 = rowMeans(out.binary[,grep('_2050_',colnames(out.binary))])
-out$mean.2080 = rowMeans(out.binary[,grep('_2080_',colnames(out.binary))])
+out.binary = as.matrix(out[,5:length(out)])
+out$mean_2020 = rowMeans(out.binary[,grep('_2020_',colnames(out.binary))],na.rm=T)
+out$mean_2050 = rowMeans(out.binary[,grep('_2050_',colnames(out.binary))],na.rm=T)
+out$mean_2080 = rowMeans(out.binary[,grep('_2080_',colnames(out.binary))],na.rm=T)
+out$sd_2020 = apply(out.binary[,grep('_2020_',colnames(out.binary))],1,function(x) { return(sd(x,na.rm=TRUE)) })
+out$sd_2050 = apply(out.binary[,grep('_2050_',colnames(out.binary))],1,function(x) { return(sd(x,na.rm=TRUE)) })
+out$sd_2080 = apply(out.binary[,grep('_2080_',colnames(out.binary))],1,function(x) { return(sd(x,na.rm=TRUE)) })
+out$worst_2020 = out$mean_2020 - (1.96 * out$sd_2020); out$best_2020 = out$mean_2020 + (1.96 * out$sd_2020)
+out$worst_2050 = out$mean_2050 - (1.96 * out$sd_2050); out$best_2050 = out$mean_2050 + (1.96 * out$sd_2050)
+out$worst_2080 = out$mean_2080 - (1.96 * out$sd_2080); out$best_2080 = out$mean_2050 + (1.96 * out$sd_2080)
 #create the plots
-png(paste(out.dir,'mean2020.png',sep=''),width=dim(no.migrate.mask)[1]*2,height=dim(no.migrate.mask)[2]*2)
-	par(mar=c(0,0,0,0))	
-	tasc = no.migrate.mask; tasc[cbind(out$row,out$col)] = out$mean.2020
-	image(tasc,zlim=c(0,1),col = cols)
-	legend.gradient(legend.local,cols)
-dev.off()
-png(paste(out.dir,'mean2050.png',sep=''),width=dim(no.migrate.mask)[1]*2,height=dim(no.migrate.mask)[2]*2)
-	par(mar=c(0,0,0,0))	
-	tasc = no.migrate.mask; tasc[cbind(out$row,out$col)] = out$mean.2050
-	image(tasc,zlim=c(0,1),col = cols)
-	legend.gradient(legend.local,cols)
-dev.off()
-png(paste(out.dir,'mean2080.png',sep=''),width=dim(no.migrate.mask)[1]*2,height=dim(no.migrate.mask)[2]*2)
-	par(mar=c(0,0,0,0))	
-	tasc = no.migrate.mask; tasc[cbind(out$row,out$col)] = out$mean.2080
-	image(tasc,zlim=c(0,1),col = cols)
-	legend.gradient(legend.local,cols)
-dev.off()
-
+image.vars = expand.grid(x=c('worst','mean','best'),y=c(2020,2050,2080)) #define the variable we want plotted
+image.vars = paste(image.vars$x,'_',image.vars$y,sep='')#define the variable we want plotted
+for (image.var in image.vars) { 
+	values = out[,image.var]; values[which(values<threshold)] = 0 #set anything less than threshold to 0
+	png(paste(out.dir,image.var,'.png',sep=''),width=dim(no.migrate.mask)[1]*2,height=dim(no.migrate.mask)[2]*2)
+		par(mar=c(0,0,0,0))	
+		tasc = no.migrate.mask; tasc[cbind(out$row,out$col)] = values
+		image(tasc,zlim=c(0,1),col = cols)
+		legend.gradient(legend.local,cols,title='suitability')
+	dev.off()
+}
+#for simplicity, append the threshold as a column
+out$threshold = threshold
 #write out the projection data and no.migrate.mask
 write.csv(out,paste(out.dir,'no.migrate.data.csv',sep=''),row.names=FALSE)
 
-################################################################################
-
+###########################################################################################
+###########################################################################################
 #start writing out the Rnw file 
 zz = file(paste(out.dir,spp,'.Rnw',sep=''),'w')
 	cat('\\documentclass[a4paper]{article}','\n',sep='',file=zz)
 	cat('\\title{',spp,' info}','\n',sep='',file=zz)
 	cat('\\author{Jeremy VanDerWal}','\n',sep='',file=zz)
 	cat('\\begin{document}','\n',sep='',file=zz)
+	cat('\n\\maketitle\n\n',sep='',file=zz)
+	cat('this is a report for Wallace Initiative species','\n',sep='',file=zz)
 	cat('\n',sep='',file=zz)
-	cat('\\maketitle','\n',sep='',file=zz)
-	cat('\n',sep='',file=zz)
-	cat('this is a trial to make a pdf report for Wallace Initiative species','\n',sep='',file=zz)
-	cat('\n',sep='',file=zz)
-	cat('<<mainsetup,echo=false,results=hide>>=','\n',sep='',file=zz)
-	cat('library(SDMTools)','\n',sep='',file=zz)
-	cat('library(raster)','\n',sep='',file=zz)
-	cat('library(sp)','\n',sep='',file=zz)
-	cat('@\n','\n',sep='',file=zz)
 	cat('<<>>=','\n',sep='',file=zz)
-	cat('#do some work','\n',sep='',file=zz)
-	cat('maxent.results = read.csv("',work.dir,'output/maxentResults.csv")','\n',sep='',file=zz)
-	cat('print(maxent.results)','\n',sep='',file=zz)
-	cat('@\n','\n',sep='',file=zz)
-	cat('\\includegraphics{current.png}\n',file=zz)
-
+	cat('#read in the contribution and accuracy information','\n',sep='',file=zz)
+	cat('print(read.csv("',out.dir,'summary.accuracy.contributions.csv"))','\n',sep='',file=zz)
+	cat('\n',sep='',file=zz)
+	cat('thresh = read.csv("',out.dir,'summary.thresholds.csv")','\n',sep='',file=zz)
+	cat('thresh[,2:8] = round(thresh[,2:8],3) #round the values for printing\n',file=zz)
+	cat('print(thresh)\n',file=zz)
+	cat('\n',sep='',file=zz)	
+	cat('@\n','\n\n\n',sep='',file=zz)
+	cat('\\newpage\n',file=zz)
+	cat('the unclipped distribution of the species \n\n\n',file=zz)
+	cat('\\includegraphics{current_unclipped.png} \n\n\n',file=zz)
+	cat('\nthe current distribution of the species clipped to a 500km buffer around the convex hull of the original occurrences\n\n\n',file=zz)
+	cat('\\includegraphics{current.png} \n\n\n',file=zz)
+	cat('\\newpage\n',file=zz)
+	cat('AVERAGE FUTURE\n\n',file=zz)
+	cat('2020 \n\n\n\\includegraphics{mean_2020.png} \n\n\n',file=zz)
+	cat('2050 \n\n\n\\includegraphics{mean_2050.png} \n\n\n',file=zz)
+	cat('2080 \n\n\n\\includegraphics{mean_2080.png} \n\n\n\n',file=zz)
+	cat('\\newpage\n',file=zz)
+	cat('BEST FUTURE\n\n',file=zz)
+	cat('2020 \n\n\n\\includegraphics{best_2020.png} \n\n\n',file=zz)
+	cat('2050 \n\n\n\\includegraphics{best_2050.png} \n\n\n',file=zz)
+	cat('2080 \n\n\n\\includegraphics{best_2080.png} \n\n\n\n',file=zz)
+	cat('\\newpage\n',file=zz)
+	cat('WORST FUTURE\n\n',file=zz)
+	cat('2020\n\n\\includegraphics{worst_2020.png} \n\n\n',file=zz)
+	cat('2050\n\n\\includegraphics{worst_2050.png} \n\n\n',file=zz)
+	cat('2080\n\n\\includegraphics{worst_2080.png} \n\n\n\n',file=zz)
 	cat('\\end{document}','\n',sep='',file=zz)
 close(zz)
 
@@ -184,4 +201,4 @@ setwd(out.dir)
 Sweave(paste(spp,'.Rnw',sep=''))
 system(paste('R CMD pdflatex ',spp,'.tex',sep=''))
 
-file.copy(paste(spp,'.pdf',sep=''),paste('/homes/31/jc165798/',spp,'.pdf',sep=''),overwrite=T)
+
