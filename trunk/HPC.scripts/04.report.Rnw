@@ -1,0 +1,46 @@
+\documentclass[a4paper]{article}
+\usepackage[cm]{fullpage}
+
+\title{Species Richness}
+\author{Jeremy VanDerWal}
+\begin{document}
+
+\maketitle
+
+\noindent This is species richness for Wallace Initiative species. \\
+
+\begin{center}
+
+Current Species Richness \\*
+\includegraphics{current.png} \\*
+
+\newpage
+\section*{AVERAGE FUTURE}
+2020 \\
+\includegraphics{mean_2020.png} \\
+2050 \\
+\includegraphics{mean_2050.png} \\
+2080 \\
+\includegraphics{mean_2080.png}  \\
+
+\newpage
+\section*{BEST FUTURE}
+2020 \\
+\includegraphics{best_2020.png} \\
+2050 \\
+\includegraphics{best_2050.png} \\
+2080 \\
+\includegraphics{best_2080.png}  \\
+
+\newpage
+\section*{WORST FUTURE}
+2020 \\
+\includegraphics{worst_2020.png} \\
+2050 \\
+\includegraphics{worst_2050.png} \\
+2080 \\
+\includegraphics{worst_2080.png}  \\
+
+\end{center}
+
+\end{document}
