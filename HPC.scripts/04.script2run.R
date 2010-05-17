@@ -54,7 +54,7 @@ out$worst_2080 = round(out$mean_2080 - (1.96 * out$sd_2080)); out$best_2080 = ro
 names(out)[grep('current',names(out))] = 'current'
 
 #write the data
-write.csv(out,paste(out.dir,spp.group,'.csv',sep=''),row.names=FALSE)
+write.csv(out,paste(out.dir,group,'.csv',sep=''),row.names=FALSE)
 
 ##set some common plotting information
 legend.local = cbind(c(-130,-135,-135,-130),c(-40,-40,0,0)) 
