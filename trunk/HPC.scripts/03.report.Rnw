@@ -1,0 +1,63 @@
+\documentclass[a4paper]{article}
+\usepackage[cm]{fullpage}
+
+\title{Species info}
+\author{Jeremy VanDerWal}
+\begin{document}
+
+\maketitle
+
+\noindent This is a report for Wallace Initiative species. Below are some model statistics and images of the distributions. \\
+
+\noindent AUC training and testing statistics come from 10-fold cross-validated Maxent runs. Contributions for each of the 
+environmental variables are shown (quick guide to variables are 1,4,5,6 - annual temp, seasonality in temp, temp of the 
+warmest and coldest periods, and 12,15,16,17 - annual prec, seasonality in prec, prec of the wettest and driest quarters).
+
+<<>>=
+#read in the contribution and accuracy information
+print(read.csv("summary.accuracy.contributions.csv"))
+
+thresh = read.csv("summary.thresholds.csv")
+thresh[,2:8] = round(thresh[,2:8],3) #round the values for printing
+print(thresh)
+@
+
+\noindent The threshold applied was the min.ROC.plot.distance for maps below.
+
+\begin{center}
+\newpage
+the unclipped distribution of the species with a 500km buffer around the convex hull of the original occurences shown \\*
+\includegraphics{current_unclipped.png} \\*
+\vspace{10 mm} the current distribution of the species clipped to a 500km buffer around the convex hull of the original occurrences \\*
+\includegraphics{current.png} 
+
+\newpage
+\section*{AVERAGE FUTURE}
+2020 \\
+\includegraphics{mean_2020.png} \\
+2050 \\
+\includegraphics{mean_2050.png} \\
+2080 \\
+\includegraphics{mean_2080.png}  \\
+
+\newpage
+\section*{BEST FUTURE}
+2020 \\
+\includegraphics{best_2020.png} \\
+2050 \\
+\includegraphics{best_2050.png} \\
+2080 \\
+\includegraphics{best_2080.png}  \\
+
+\newpage
+\section*{WORST FUTURE}
+2020 \\
+\includegraphics{worst_2020.png} \\
+2050 \\
+\includegraphics{worst_2050.png} \\
+2080 \\
+\includegraphics{worst_2080.png}  \\
+
+\end{center}
+
+\end{document}
