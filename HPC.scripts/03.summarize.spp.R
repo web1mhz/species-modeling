@@ -49,7 +49,7 @@ for (spp.group in spp.groups){
 			cat('##################################\n',file=zz)		
 		close(zz)
 		system(paste('qsub ',spp,'.sh',sep=''))
-		system('sleep 0.1')
+		system('sleep 0.5')
 	}
 }
 
