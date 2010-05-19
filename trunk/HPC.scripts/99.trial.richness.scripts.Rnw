@@ -1,0 +1,101 @@
+\documentclass[a4paper]{article}
+\usepackage[cm]{fullpage}
+
+\title{Species Richness}
+\author{Jeremy VanDerWal}
+\begin{document}
+
+\maketitle
+
+\noindent This is species richness for Wallace Initiative species. \\
+
+\begin{center}
+
+Current Species Richness \\*
+\includegraphics{images/richness/current.png} \\*
+
+\newpage
+\section*{AVERAGE FUTURE RICHNESS}
+2020 \\
+\includegraphics{images/richness/mean_2020.png} \\
+2050 \\
+\includegraphics{images/richness/mean_2050.png} \\
+2080 \\
+\includegraphics{images/richness/mean_2080.png} \\
+
+\newpage
+\section*{BEST FUTURE RICHNESS}
+2020 \\
+\includegraphics{images/richness/best_2020.png} \\
+2050 \\
+\includegraphics{images/richness/best_2050.png} \\
+2080 \\
+\includegraphics{images/richness/best_2080.png} \\
+
+\newpage
+\section*{WORST FUTURE RICHNESS}
+2020 \\
+\includegraphics{images/richness/worst_2020.png} \\
+2050 \\
+\includegraphics{images/richness/worst_2050.png} \\
+2080 \\
+\includegraphics{images/richness/worst_2080.png} \\
+
+\newpage
+\section*{AVERAGE FUTURE ABSOLUTE SPECIES LOSS}
+2020 \\
+\includegraphics{images/absolute_loss/mean_2020.png} \\
+2050 \\
+\includegraphics{images/absolute_loss/mean_2050.png} \\
+2080 \\
+\includegraphics{images/absolute_loss/mean_2080.png} \\
+
+\newpage
+\section*{BEST FUTURE ABSOLUTE SPECIES LOSS}
+2020 \\
+\includegraphics{images/absolute_loss/best_2020.png} \\
+2050 \\
+\includegraphics{images/absolute_loss/best_2050.png} \\
+2080 \\
+\includegraphics{images/absolute_loss/best_2080.png} \\
+
+\newpage
+\section*{WORST FUTURE ABSOLUTE SPECIES LOSS}
+2020 \\
+\includegraphics{images/absolute_loss/worst_2020.png} \\
+2050 \\
+\includegraphics{images/absolute_loss/worst_2050.png} \\
+2080 \\
+\includegraphics{images/absolute_loss/worst_2080.png} \\
+
+\newpage
+\section*{AVERAGE FUTURE PERCENT SPECIES LOSS}
+2020 \\
+\includegraphics{images/percent_loss/mean_2020.png} \\
+2050 \\
+\includegraphics{images/percent_loss/mean_2050.png} \\
+2080 \\
+\includegraphics{images/percent_loss/mean_2080.png} \\
+
+\newpage
+\section*{BEST FUTURE PERCENT SPECIES LOSS}
+2020 \\
+\includegraphics{images/percent_loss/best_2020.png} \\
+2050 \\
+\includegraphics{images/percent_loss/best_2050.png} \\
+2080 \\
+\includegraphics{images/percent_loss/best_2080.png} \\
+
+\newpage
+\section*{WORST FUTURE PERCENT SPECIES LOSS}
+2020 \\
+\includegraphics{images/percent_loss/worst_2020.png} \\
+2050 \\
+\includegraphics{images/percent_loss/worst_2050.png} \\
+2080 \\
+\includegraphics{images/percent_loss/worst_2080.png} \\
+
+
+\end{center}
+
+\end{document}
