@@ -27,4 +27,4 @@ for (spp in species) { cat(spp,'\n')
 	out = rbind(out,tout) #add the info to the output dataset			
 }
 #write the output
-write.csv(out,paste(out.dir,group,'.area.csv',sep=''))
+write.csv(out,paste(out.dir,group,'.area.csv',sep=''),row.names=FALSE)
