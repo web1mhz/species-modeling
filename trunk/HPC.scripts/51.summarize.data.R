@@ -77,41 +77,7 @@ histplots = function(x,tfile) {
 	dev.off()
 }
 
-
-#read in the data, extract summaries & write them out
-amph = sum.data('amphibia.area.csv'); write.csv(amph,'amphibia.summary.csv',row.names=FALSE)
-amph.ES.GCM = summarize.ES.GCM(amph); write.csv(amph.ES.GCM,'amphibia.ES.GCM.csv',row.names=FALSE)
-amph.ES = summarize.ES(amph); write.csv(amph.ES,'amphibia.ES.csv',row.names=FALSE)
-amph.status = summarize.status.counts(amph); write.csv(amph.status,'amphibia.status.counts.csv',row.names=FALSE)
-
-aves = sum.data('aves.area.csv'); write.csv(aves,'aves.summary.csv',row.names=FALSE) 
-aves.ES.GCM = summarize.ES.GCM(aves); write.csv(aves.ES.GCM,'aves.ES.GCM.csv',row.names=FALSE)
-aves.ES = summarize.ES(aves); write.csv(aves.ES,'aves.ES.csv',row.names=FALSE)
-aves.status = summarize.status.counts(aves); write.csv(aves.status,'aves.status.counts.csv',row.names=FALSE)
-
-mamm = sum.data('mammalia.area.csv'); write.csv(mamm,'mammalia.summary.csv',row.names=FALSE)
-mamm.ES.GCM = summarize.ES.GCM(mamm); write.csv(mamm.ES.GCM,'mammalia.ES.GCM.csv',row.names=FALSE)
-mamm.ES = summarize.ES(mamm); write.csv(mamm.ES,'mammalia.ES.csv',row.names=FALSE)
-mamm.status = summarize.status.counts(mamm); write.csv(mamm.status,'mammalia.status.counts.csv',row.names=FALSE)
-
-rept = sum.data('reptilia.area.csv'); write.csv(rept,'reptilia.summary.csv',row.names=FALSE)
-rept.ES.GCM = summarize.ES.GCM(rept); write.csv(rept.ES.GCM,'reptilia.ES.GCM.csv',row.names=FALSE)
-rept.ES = summarize.ES(rept); write.csv(rept.ES,'reptilia.ES.csv',row.names=FALSE)
-rept.status = summarize.status.counts(rept); write.csv(rept.status,'reptilia.status.counts.csv',row.names=FALSE)
-
-#define some variables
-years=c(2020,2050,2080)
-GCMs=unique(amph$GCM); GCMs = GCMs[-which(GCMs=='current')]
-ESs=unique(amph$ES); ESs = ESs[-which(ESs=='current')]
-
-#create some plots
-histplots(amph,'amphibia')
-histplots(aves,'aves')
-histplots(mamm,'mammalia')
-histplots(rept,'reptilia')
-
 library(Hmisc)
-
 spp.loss = function(x,tfile,n) {
 	pdf(paste(tfile,'.spp.loss.pdf',sep=''),width=15,height=8.5,pointsize=9)
 		par(mfrow=c(4,8),mar=c(3,3,1,1),oma=c(0,3,3,0))
@@ -188,10 +154,46 @@ spp.loss = function(x,tfile,n) {
 			} }
 			legend('top',legend=GCM,bty='n')
 		}
-				
+		
+		mtext(c('prop species <0.01 current','prop CR (<0.1)','prop EN (<0.3)','prop VU (<0.5)'),2,1.5,TRUE,at=c(.875,.625,.375,.125),adj=0.5)
+		mtext(tfile,3,1.5,TRUE,adj=0.5)
 	dev.off()
 }	
 
+
+#read in the data, extract summaries & write them out
+amph = sum.data('amphibia.area.csv'); write.csv(amph,'amphibia.summary.csv',row.names=FALSE)
+amph.ES.GCM = summarize.ES.GCM(amph); write.csv(amph.ES.GCM,'amphibia.ES.GCM.csv',row.names=FALSE)
+amph.ES = summarize.ES(amph); write.csv(amph.ES,'amphibia.ES.csv',row.names=FALSE)
+amph.status = summarize.status.counts(amph); write.csv(amph.status,'amphibia.status.counts.csv',row.names=FALSE)
+
+aves = sum.data('aves.area.csv'); write.csv(aves,'aves.summary.csv',row.names=FALSE) 
+aves.ES.GCM = summarize.ES.GCM(aves); write.csv(aves.ES.GCM,'aves.ES.GCM.csv',row.names=FALSE)
+aves.ES = summarize.ES(aves); write.csv(aves.ES,'aves.ES.csv',row.names=FALSE)
+aves.status = summarize.status.counts(aves); write.csv(aves.status,'aves.status.counts.csv',row.names=FALSE)
+
+mamm = sum.data('mammalia.area.csv'); write.csv(mamm,'mammalia.summary.csv',row.names=FALSE)
+mamm.ES.GCM = summarize.ES.GCM(mamm); write.csv(mamm.ES.GCM,'mammalia.ES.GCM.csv',row.names=FALSE)
+mamm.ES = summarize.ES(mamm); write.csv(mamm.ES,'mammalia.ES.csv',row.names=FALSE)
+mamm.status = summarize.status.counts(mamm); write.csv(mamm.status,'mammalia.status.counts.csv',row.names=FALSE)
+
+rept = sum.data('reptilia.area.csv'); write.csv(rept,'reptilia.summary.csv',row.names=FALSE)
+rept.ES.GCM = summarize.ES.GCM(rept); write.csv(rept.ES.GCM,'reptilia.ES.GCM.csv',row.names=FALSE)
+rept.ES = summarize.ES(rept); write.csv(rept.ES,'reptilia.ES.csv',row.names=FALSE)
+rept.status = summarize.status.counts(rept); write.csv(rept.status,'reptilia.status.counts.csv',row.names=FALSE)
+
+#define some variables
+years=c(2020,2050,2080)
+GCMs=unique(amph$GCM); GCMs = GCMs[-which(GCMs=='current')]
+ESs=unique(amph$ES); ESs = ESs[-which(ESs=='current')]
+
+#create some plots
+histplots(amph,'amphibia')
+histplots(aves,'aves')
+histplots(mamm,'mammalia')
+histplots(rept,'reptilia')
+
+#plot the spp loss curves
 spp.loss(amph.status,'amphibia',length(unique(amph$spp)))
 spp.loss(aves.status,'aves',length(unique(aves$spp)))
 spp.loss(mamm.status,'mammalia',length(unique(mamm$spp)))
@@ -200,9 +202,43 @@ all.data = rbind(amph,aves,mamm,rept)
 all.status = summarize.status.counts(all.data) 
 spp.loss(all.status,'all',length(c(unique(amph$spp),unique(aves$spp),unique(mamm$spp),unique(rept$spp))))
 
-
-hist(all.data$num.cells[which(all.data$ES=='current')],breaks=seq(0,22500,100))
-hist(all.data$num.cells[which(all.data$ES=='current' & all.data$num.cells<=100)],breaks=seq(0,100,10))
+#plot the range size frequency distribution
+pdf('range.size.frequency.dist.pdf')
+	hist(all.data$num.cells[which(all.data$ES=='current')],breaks=seq(0,22500,100))
 dev.off()
 
+#create species loss plots for all spp and images
+pdf('images.4.ppt.pdf',width=4,height=3,pointsize=8)
+	par(mar=c(4,4,4,1))
+	x = all.status; n = length(unique(all.data$spp)) #define the data
+	x[,c('ex','cr','en','vu')] = x[,c('ex','cr','en','vu')]/n #make this proportionate
+	cols = c('#FF0000','#2E8B57','#0000FF') #define the line colors
+	cols.fill = paste(cols,'30',sep='') #define the polygon fill colors
+
+	tplot = function(tdata,title) {
+		#start plotting
+		tout = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),mean); names(tout)[3] = 'mean'
+		tout$sd = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),sd)[,3]
+		tout$min = tout$mean-tout$sd
+		tout$max = tout$mean+tout$sd
+		#create the basic plot
+		plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='proportion of species',xlab='year',type='n',axes=F,main=title)
+		axis(2); axis(1,at=seq(2020,2080,10),labels=c(2020,NA,NA,2050,NA,NA,2080))
+		#add the polygons
+		pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
+		pos = grep('30',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[2],border=NA)
+		pos = grep('16',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[3],border=NA)
+		#add the lines
+		for (ES in ESs) {
+			if (ES=='SRES') { ii=1 } else if (length(grep('30',ES))>0) { ii=2 } else { ii=3 }
+			pos = which(tout$ES==ES); points(tout$year[pos],tout$mean[pos],type='o',pch=19,col=cols[ii])
+		}
+		legend('topleft',legend=c('SRES','Avoid 2030','Avoid 2016'),col=cols,pch=19,bty='n')
+	}
+	tplot(x[,c('ES','GCM','year','cr')],title='< 10% current distribution')
+	tplot(x[,c('ES','GCM','year','en')],title='< 30% current distribution')
+	tplot(x[,c('ES','GCM','year','vu')],title='< 50% current distribution')
+dev.off()
 
