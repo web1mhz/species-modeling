@@ -78,9 +78,10 @@ if (file.exists(paste(out.dir,'mask.asc.gz',sep=''))) {
 	write.asc.gz(mask,paste(out.dir,'mask.asc',sep='')) #write out the mask
 	pos = as.data.frame(which(is.finite(mask),arr.ind=TRUE)) #get the positions
 	pos$lat = getXYcoords(mask)$y[pos$col]; pos$lon = getXYcoords(mask)$x[pos$row] #convert to lat & long
+	pos$domain = extract.data(cbind(pos$lon,pos$lat),read.asc.gz('/homes/31/jc165798/working/Wallace.Initiative/training.data/background.selection.mask.asc.gz'))#append the domain (contenent) info
 	out = pos; write.csv(out,gzfile(paste(out.dir,'mask.pos.csv.gz',sep='')),row.names=FALSE)
 }
-out$current.thresholded.clipped = extract.data(cbind(pos$lon,pos$lat),cur.asc) #append the current known info
+out$current.clipped = extract.data(cbind(pos$lon,pos$lat),cur.asc) #append the current known info
 
 ###process all future scenarios
 projs = list.files('output/',pattern='\\.asc.gz') #get a list of all asc.gz files
@@ -97,3 +98,11 @@ for (projx in projs) {
 out$threshold = threshold
 #write out the projection data
 write.csv(out,gzfile(paste(out.dir,spp,'.predictions.raw.csv.gz',sep='')),row.names=FALSE)
+
+#convert to binary by applying threshold & write out data
+tout = as.matrix(out[6:length(out)])
+tout[which(tout<threshold)] = 0; tout[which(tout>0)] = 1
+out[6:length(out)] = tout
+#write out the projection data
+write.csv(out,gzfile(paste(out.dir,spp,'.predictions.binary.csv.gz',sep='')),row.names=FALSE)
+ 

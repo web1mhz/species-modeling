@@ -32,7 +32,6 @@ for (spp.group in spp.groups){
 			cat('##################################\n',file=zz)		
 		close(zz)
 		system(paste('qsub -m n ',spp,'.sh',sep=''))
-		system('sleep 1')
 	}
 }
 
