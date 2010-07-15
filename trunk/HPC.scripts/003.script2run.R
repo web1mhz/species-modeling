@@ -71,15 +71,15 @@ pos$in.hull.buff = pnt.in.poly(cbind(pos$lon,pos$lat),cbind(hull.buff$lon,hull.b
 cur.asc[cbind(pos$row[which(pos$in.hull.buff==0)],pos$col[which(pos$in.hull.buff==0)])] = 0 #set all values outside hull to 0
 
 #create a mask asc & pos dataframe if is does not exist
-if (file.exists(paste(out.dir,'mask.asc.gz',sep=''))) {
-	pos = out = read.csv(gzfile(paste(out.dir,'mask.pos.csv.gz',sep='')),as.is=TRUE)
+if (file.exists('/homes/31/jc165798/working/Wallace.Initiative/summaries/mask.pos.csv.gz')) {
+	pos = out = read.csv(gzfile('/homes/31/jc165798/working/Wallace.Initiative/summaries/mask.pos.csv.gz'),as.is=TRUE)
 } else {
 	mask = cur.asc; mask[which(is.finite(cur.asc))] = 0 #this is an mask of terrestrial environment
-	write.asc.gz(mask,paste(out.dir,'mask.asc',sep='')) #write out the mask
+	write.asc.gz(mask,'/homes/31/jc165798/working/Wallace.Initiative/summaries/mask.asc') #write out the mask
 	pos = as.data.frame(which(is.finite(mask),arr.ind=TRUE)) #get the positions
 	pos$lat = getXYcoords(mask)$y[pos$col]; pos$lon = getXYcoords(mask)$x[pos$row] #convert to lat & long
 	pos$domain = extract.data(cbind(pos$lon,pos$lat),read.asc.gz('/homes/31/jc165798/working/Wallace.Initiative/training.data/background.selection.mask.asc.gz'))#append the domain (contenent) info
-	out = pos; write.csv(out,gzfile(paste(out.dir,'mask.pos.csv.gz',sep='')),row.names=FALSE)
+	out = pos; write.csv(out,gzfile('/homes/31/jc165798/working/Wallace.Initiative/summaries/mask.pos.csv.gz'),row.names=FALSE)
 }
 out$current.clipped = extract.data(cbind(pos$lon,pos$lat),cur.asc) #append the current known info
 
