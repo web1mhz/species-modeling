@@ -32,3 +32,9 @@ for (spp.group in spp.groups){
 
 disp.real = 1500 #m pa ... this is the realistic distance a species will disperse 
 disp.opt = 3000 #m pa ... this is the optimistic distance a species will disperse
+
+pbs.dir = '/homes/31/jc165798/working/Wallace.Initiative/tmp.pbs2/'; setwd(pbs.dir);
+sh.files = list.files(,pattern='\\.sh'); sh.files=sh.files[-grep('\\.sh.',sh.files)]; sh.files=gsub('\\.sh','',sh.files)
+rout.files = list.files(,pattern='\\.Rout'); rout.files=gsub('\\.Rout','',rout.files)
+for (ii in setdiff(sh.files,rout.files)) { system(paste('qsub -m n ',ii,'.sh',sep='')) }
+
