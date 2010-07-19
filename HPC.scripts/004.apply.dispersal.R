@@ -5,7 +5,7 @@ script2run = '/homes/31/jc165798/working/Wallace.Initiative/scripts/HPC.scripts/
 
 #get the species groups
 spp.groups = list.files(data.dir)
-
+count=0
 #cycle through each of the species groups
 for (spp.group in spp.groups[-which(spp.groups=='plantae')]){
 	#create the out.sum.dir
@@ -25,6 +25,8 @@ for (spp.group in spp.groups[-which(spp.groups=='plantae')]){
 			cat('##################################\n',file=zz)		
 		close(zz)
 		system(paste('qsub -m n ',spp,'.sh',sep=''))
+		count = count+1
+		if(count%%25==0) system('sleep 200')
 	}
 }
 ###############################

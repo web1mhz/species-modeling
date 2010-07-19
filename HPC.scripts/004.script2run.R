@@ -157,5 +157,5 @@ out$scenario=NULL #set the scenario to null as it is no longer needed
 out = out[,c(1,10:12,2:9)] #reorder columns
 
 #write out the projection data
-write.csv(out,gzfile(paste(out.dir,spp,'.prediction.area.csv',sep='')),row.names=FALSE)
+write.csv(out,gzfile(paste(out.dir,spp,'.prediction.area.csv.gz',sep='')),row.names=FALSE)
 
