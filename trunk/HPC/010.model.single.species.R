@@ -6,12 +6,13 @@ proj.dir = '/data/jc165798/WallaceInitiative/projecting.data/'
 
 #define the location of maxent.jar & script2run file
 maxent = '/data/jc165798/WallaceInitiative/maxent.jar'
-script2run = '/homes/31/jc165798/working/Wallace.Initiative/scripts/HPC/010.script2run.R'
+script2run = '/home1/31/jc165798/SCRIPTS/WallaceInitiative/HPC/010.script2run.R'
 
 #define the output model directory
 model.dir = '/data/jc165798/WallaceInitiative/models/'
 groups = list.files(model.dir); groups = groups[c(3,1,4,2)] #start with mammals ***** fix for plants
 
+count = 0
 #cycle through each of the groups and sumbit species jobs
 for (group in groups) {
 	group.dir = paste(model.dir,group,'/',sep='')
@@ -28,6 +29,7 @@ for (group in groups) {
 			cat('##################################\n',file=zz)		
 		close(zz)
 		system(paste('qsub -m n ',spp,'.sh',sep=''))
+		count = count + 1; if (count%%150==0) system('sleep 600')
 	}
 }
 
