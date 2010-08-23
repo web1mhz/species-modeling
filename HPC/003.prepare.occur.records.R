@@ -1,3 +1,6 @@
+# grab interactive node to prepare background data using
+# qsub -I -l place=excl -l select=1:ncpus=8:NodeType=medium -A q1086
+
 #setup & load libraries needed for run
 library(SDMTools)
 
@@ -56,60 +59,52 @@ for (infile in infiles.occur) {
 
 ###########################################################################################
 #read in the processed occurance files and process them
-infiles.occur = list.files(train.dir,pattern='\\.csv')
+infiles.occur = list.files(train.dir,pattern='occur.csv',recursive=TRUE); infiles.occur = gsub('/occur.csv','',infiles.occur)
 
 ###note for plants... must put into families...**********************************************
 
 #cycle through each of the files
 for (infile in infiles.occur) {	cat(infile,'\n')
-	occur = read.csv(paste(train.dir,infile,sep=''),as.is=TRUE) # read in the data
-	species = unique(occur$specie_id) #get he list of species
-	save(species,file=paste(tmp.pbs,gsub('csv','',infile),'species.Rdata',sep='')) #save the species list for all to access
-
-	#define the number of bins for running the sh scripts
-	bins = seq(1,length(species),100); bins = c(bins,length(species))
+	outfile = gsub('/','_',infile)
+	#create a temporary R script
+	zz = file(paste(tmp.pbs,outfile,'.R',sep=''),'w')
+		cat("#load the libraries \n",file=zz)
+		cat("library(SDMTools) \n",file=zz)
+		cat('\n',file=zz)
+		cat("#read in the background file asc & individual domains \n",file=zz)
+		cat("bkgd = read.asc.gz('/home/uqvdwj/WallaceInitiative/training.data/ecozone001degree.asc.gz') \n",file=zz)
+		cat("for (ii in 1:8) assign(paste('bkgd.',ii,sep=''),read.csv(paste('/home/uqvdwj/WallaceInitiative/training.data/bkgd.domain.',ii,'.csv',sep=''))) \n",file=zz)
+		cat('\n',file=zz)
+		cat("#prepare the occurrences \n",file=zz)
+		cat('work.dir="/home/uqvdwj/WallaceInitiative/models/',infile,'/"; dir.create(work.dir,recursive=TRUE); setwd(work.dir) \n',sep='',file=zz)
+		cat('occur=read.csv("',train.dir,infile,'/occur.csv','",as.is=TRUE) \n',sep='',file=zz)
+		cat('species=unique(occur$specie_id) \n',sep='',file=zz)
+		cat('\n',file=zz)
+		cat("#cycle through the species \n",file=zz)
+		cat("for (spp in species){  \n",file=zz)
+		cat("    dir.create(as.character(spp))  \n",file=zz)
+		cat("    out.occur = occur[which(occur$specie_id==spp),]  \n",file=zz)
+		cat("    tbkgd = extract.data(cbind(out.occur$lon,out.occur$lat),bkgd); tbkgd = na.omit(unique(tbkgd)) #get the unique domains \n",file=zz)
+		cat("    out.bkgd = NULL; for (ii in tbkgd) out.bkgd = rbind(out.bkgd,get(paste('bkgd.',ii,sep=''))) #grab the background data for the domains \n",file=zz)
+		cat("    write.csv(out.bkgd,paste(spp,'/bkgd.csv',sep=''),row.names=F) #write out the data \n",file=zz)
+		cat("    write.csv(out.occur,paste(spp,'/occur.csv',sep=''),row.names=F) #write out the data \n",file=zz)
+		cat("} \n",file=zz)
+		cat('\n',file=zz)			
+	#close the file
+	close(zz)
 	
-	#cycle through and submit the jobs
-	for (ii in 1:(length(bins)-1)) {cat(ii,'\n')
-		#create a temporary R script
-		zz = file(paste(tmp.pbs,gsub('csv','',infile),sprintf('%05i',ii),'.R',sep=''),'w')
-			cat("#load the libraries \n",file=zz)
-			cat("library(SDMTools) \n",file=zz)
-			cat('\n',file=zz)
-			cat("#read in the background file asc & individual domains \n",file=zz)
-			cat("bkgd = read.asc.gz('/data/jc165798/WallaceInitiative/training.data/ecozone001degree.asc.gz') \n",file=zz)
-			cat("for (ii in 1:8) assign(paste('bkgd.',ii,sep=''),read.csv(paste('/data/jc165798/WallaceInitiative/training.data/bkgd.domain.',ii,'.csv',sep=''))) \n",file=zz)
-			cat('\n',file=zz)
-			cat("#prepare the occurrences \n",file=zz)
-			cat('work.dir="/data/jc165798/WallaceInitiative/models/',gsub('\\.csv','',infile),'/"; dir.create(work.dir,recursive=TRUE); setwd(work.dir) \n',sep='',file=zz)
-			cat('occur=read.csv("',train.dir,infile,'",as.is=TRUE) \n',sep='',file=zz)
-			cat('load("',tmp.pbs,gsub('csv','',infile),'species.Rdata") \n',sep='',file=zz)
-			cat('species=species[',bins[ii],':',bins[ii+1],'] \n',sep='',file=zz)
-			cat('\n',file=zz)
-			cat("#cycle through the species \n",file=zz)
-			cat("for (spp in species){  \n",file=zz)
-			cat("    dir.create(as.character(spp))  \n",file=zz)
-			cat("    out.occur = occur[which(occur$specie_id==spp),]  \n",file=zz)
-			cat("    tbkgd = extract.data(cbind(out.occur$lon,out.occur$lat),bkgd); tbkgd = na.omit(unique(tbkgd)) #get the unique domains \n",file=zz)
-			cat("    out.bkgd = NULL; for (ii in tbkgd) out.bkgd = rbind(out.bkgd,get(paste('bkgd.',ii,sep=''))) #grab the background data for the domains \n",file=zz)
-			cat("    write.csv(out.bkgd,paste(spp,'/bkgd.csv',sep=''),row.names=F) #write out the data \n",file=zz)
-			cat("    write.csv(out.occur,paste(spp,'/occur.csv',sep=''),row.names=F) #write out the data \n",file=zz)
-			cat("} \n",file=zz)
-			cat('\n',file=zz)			
-		#close the file
-		close(zz)
-		
-		#create the job submission script
-		zz = file(paste(tmp.pbs,gsub('csv','',infile),sprintf('%05i',ii),'.sh',sep=''),'w')
-			cat('cd ',tmp.pbs,' \n',sep='',file=zz)
-			cat('R CMD BATCH ',gsub('csv','',infile),sprintf('%05i',ii),'.R ',gsub('csv','',infile),sprintf('%05i',ii),'.Rout --no-save \n',sep='',file=zz)
-		#close the file
-		close(zz)
-	}
+	#create the job submission script
+	zz = file(paste(tmp.pbs,outfile,'.sh',sep=''),'w')
+		cat('#!/bin/bash \n',file=zz)
+		cat('module load R \n',file=zz)
+		cat('cd ',tmp.pbs,' \n',sep='',file=zz)
+		cat('R CMD BATCH ',outfile,'.R ',outfile,'.Rout --no-save \n',sep='',file=zz)
+	#close the file
+	close(zz)
 }
 
 #cycle through and submit all the sh scripts created
 setwd(tmp.pbs)
 sh.files = list.files(,pattern='\\.sh')
-for (sh.file in sh.files) { system(paste('qsub -l nodes=1:ppn=2 -m n ',sh.file,sep='')); system('sleep 0.5') }
+for (sh.file in sh.files) { system(paste('qsub -A q1086 ',sh.file,sep='')) }
  
