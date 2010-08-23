@@ -4,31 +4,31 @@ library(SDMTools)
 ################################################################################
 
 #define & set the working directory
-work.dir = '/data/jc165798/WallaceInitiative/'; setwd(work.dir)
+work.dir = '/home/uqvdwj/WallaceInitiative/'; setwd(work.dir)
 
 #define the location of the occur files and list the files
-in.dir = '/data/jc165798/WallaceInitiative/raw.files.20100417/unzipped/'
+in.dir = '/home/uqvdwj/WallaceInitiative/raw.files.20100417/unzipped/'
 infiles.occur = list.files(in.dir,pattern='\\.csv')
 
 #training data directory
-train.dir = '/data/jc165798/WallaceInitiative/training.data/occur/'
+train.dir = '/home/uqvdwj/WallaceInitiative/training.data/occur/'
 
 #define the environmental variables to be used in appending data
-enviro.dir = '/data/jc165798/WallaceInitiative/training.data/current.0.1degree/'
+enviro.dir = paste(work.dir,'training.data/current.0.1degree/',sep='')
 enviro.layers = list.files(enviro.dir,pattern='asc.gz'); enviro.layers = gsub('\\.asc.gz','',enviro.layers) #list files and remove the suffix
 #load the enviro.data
 for (enviro in enviro.layers) { cat(enviro,'\n'); assign(enviro,read.asc.gz(paste(enviro.dir,enviro,'.asc.gz',sep=''))) }
 cellsize = attr(get(enviro.layers[1]),'cellsize')
 
 #define the temporary script folder
-tmp.pbs = '/data/jc165798/WallaceInitiative/tmp.pbs/'
+tmp.pbs = paste(work.dir,'tmp.pbs/',sep=''); dir.create(tmp.pbs);
 
 #cycle through each of the raw occurrence files
 for (infile in infiles.occur) {
 	cat(infile,'\n')
 	#read in and prep occur data
 	occur = read.csv(paste(in.dir,infile,sep=''),as.is=T) #read in the data
-	occur = occur[,c('specie_id','lon','lat')] #exclude extra columns
+	occur = occur[,c('family','genus','specie_id','lon','lat')] #exclude extra columns
 	occur$lat = round(occur$lat/cellsize)*cellsize #round lat to nearest cellsize
 	occur$lon = round(occur$lon/cellsize)*cellsize #round lon to nearest cellsize
 	occur = unique(occur) #keep only unique occurrence records
@@ -40,12 +40,18 @@ for (infile in infiles.occur) {
 	#get a species list where the species counts are < 10 records
 	counts = aggregate(occur$specie_id,by=list(specie_id=occur$specie_id),length)
 	species = counts$specie_id[which(counts$x>=10)]
-	
+
 	#remove occur  records for species not in species list
 	occur = occur[which(occur$specie_id %in% species),]
 	
 	#write out the occurrance file
-	write.csv(occur,paste(train.dir,infile,sep=''),row.names=F)#write out the occurrence records
+	for (fam in unique(occur$family)) {
+		pos = which(occur$family==fam)
+		if (length(pos)>0) {
+			fam.dir = paste(train.dir,gsub('\\.csv','',infile),'/',fam,'/',sep=''); dir.create(fam.dir,recursive=TRUE)
+			write.csv(occur[pos,-1:-2],paste(fam.dir,'occur.csv',sep=''),row.names=FALSE)#write out the occurrence records
+		}
+	}
 }
 
 ###########################################################################################
