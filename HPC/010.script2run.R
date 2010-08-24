@@ -7,17 +7,18 @@ for(i in 1:length(args)) {
  eval(parse(text=args[[i]]))
 }
 #should have read in e.g.,...
-# spp=13749423 
-# work.dir="/data/jc165798/WallaceInitiative/models/mammalia/13749423/"
-# maxent="/data/jc165798/WallaceInitiative/maxent.jar"
-# proj.dir="/data/jc165798/WallaceInitiative/projecting.data/"
+# spp=13800736 
+# work.dir="/home/uqvdwj/WallaceInitiative/models/amphibia/Ambystomatidae/13800736/"
+# maxent="/home/uqvdwj/WallaceInitiative/maxent.jar"
+# proj.dir="/home/uqvdwj/WallaceInitiative/projecting.data/"
+# train.dir="/home/uqvdwj/WallaceInitiative/training.data/" #define the directory where generic training data is
 # models=TRUE
 # project=TRUE
 # summarize=TRUE
 # clip=TRUE
 # rich=TRUE
-# disp.real = 1500 #m pa ... this is the realistic distance a species will disperse 
-# disp.opt = 3000 #m pa ... this is the optimistic distance a species will disperse
+# disp.real = 100 #m pa ... this is the realistic distance a species will disperse 
+# disp.opt = 500 #m pa ... this is the optimistic distance a species will disperse
 # clip.dist = 2000000 #distance to clip species to
 
 ################################################################################
@@ -30,11 +31,11 @@ model.species = function() {
 	dir.create('output') #create the output directory
 	#run maxent
 	if (nrow(occur) >= 40) { #run the maxent model once with full data and another cross validated
-		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings replicates=5 noaskoverwrite novisible nooutputgrids autorun',sep=''))
+		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings replicates=10 noaskoverwrite novisible nooutputgrids autorun',sep=''))
 		system('cp -af output/maxentResults.csv output/maxentResults.crossvalide.csv')
 		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids autorun',sep=''))
 	} else {
-		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings replicates=5 noaskoverwrite novisible nooutputgrids autorun',sep=''))
+		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings replicates=10 noaskoverwrite novisible nooutputgrids autorun',sep=''))
 		system('cp -af output/maxentResults.csv output/maxentResults.crossvalide.csv')
 		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids autorun',sep=''))
 	}
@@ -113,11 +114,7 @@ summarize.species =function() {
 
 #clip the species distributions and apply dispersal values
 clip.species = function() {
-	if (summarize) {
-		indata = as.data.frame(tdata); rm(tdata) #get the data from memory
-	} else {
-		indata = read.csv(gzfile('summaries/predictions.binary.csv.gz'),as.is=TRUE) #read in the data
-	}
+	indata = read.csv(gzfile('summaries/predictions.binary.csv.gz'),as.is=TRUE) #read in the data
 
 	#append columns to clip to domain & clip.dist
 	pos = which(is.finite(indata$occur)) #this defines the rows of data where the species occurred
@@ -233,13 +230,7 @@ clip.species = function() {
 
 #summarize info for richness calculations
 rich.species = function(){
-	if (clip) {
-		indata = tdata; rm(tdata) #get the data from memory
-	} else {
-		if (file.exists('summaries/predictions.binary.dispersal.csv.gz')) {
-			indata = as.matrix(read.csv(gzfile('summaries/predictions.binary.dispersal.csv.gz'),as.is=TRUE)) #read in the data
-		} else { warning('missing bindary dispersal file...'); quit('no') } 
-	}
+	indata = as.matrix(read.csv(gzfile('summaries/predictions.binary.dispersal.csv.gz'),as.is=TRUE)) #read in the data
 
 	out.dir = paste(work.dir,'richness/',sep=''); dir.create(out.dir) #define the summary output directory
 	
@@ -293,7 +284,6 @@ rich.species = function(){
 }
 
 ###########################################################################################
-train.dir = '/data/jc165798/WallaceInitiative/training.data/' #define the directory where generic training data is
 setwd(work.dir) #set the working directory
 occur = read.csv('occur.csv') #read in the occurance records
 
