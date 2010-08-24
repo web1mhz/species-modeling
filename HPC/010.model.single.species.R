@@ -22,20 +22,20 @@ model.dir = '/home/uqvdwj/WallaceInitiative/models/'
 groups = list.files(model.dir)#list the taxonomic groups of species
 
 #cycle through each of the groups and sumbit species jobs
-for (group in groups) {
+for (group in groups) { cat(group,'\n')
 	families = list.files(paste(model.dir,group,'/',sep='')) #get alist of families
-	for (fam in families) {
+	#setup more of th arguments
+	if (group=='aves' | group=='mammalia') { arg.disp.real = 'disp.real=1500 '; arg.disp.opt = 'disp.opt=3000 ' } #ensure trailing space
+	if (group=='amphibia' | group=='reptilia' | group=='plantae') { arg.disp.real = 'disp.real=100 '; arg.disp.opt = 'disp.opt=500 ' } #ensure trailing space		
+	#cycle through the families
+	for (fam in families) { cat('    ',fam,'\n')
 		base.dir = paste(model.dir,group,'/',fam,'/',sep='') #get the base working directory
 		species = list.files(base.dir)#list the species for which we have occurrences
-		#setup more of th arguments
-		if (group=='aves' | group=='mammalia') { arg.disp.real = 'disp.real=1500 '; arg.disp.opt = 'disp.opt=3000 ' } #ensure trailing space
-		if (group=='amphibia' | group=='reptilia' | group=='plantae') { arg.disp.real = 'disp.real=100 '; arg.disp.opt = 'disp.opt=500 ' } #ensure trailing space		
 		#cycle through each of the species
 		for (spp in species) {
 			arg.spp = paste('spp=',spp,' ',sep='')
 			#create a sh script to submit the species summary job
 			zz = file(paste(spp,'.sh',sep=''),'w')
-				cat('##################################\n',file=zz)
 				cat('#!/bin/bash \n',file=zz)
 				cat('#!/bin/sh \n',file=zz)
 				cat('mkdir -p /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #make a directory on the scratch drive
@@ -52,10 +52,10 @@ for (group in groups) {
 				cat('cd /scratch\n',file=zz)#move to the upper level directory
 				cat('rm -rf /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #clean up the scratch space
 				cat('rmdir /scratch/uqvdwj/\n',sep='',file=zz) #remove this directory if it is empty
-				cat('##################################\n',file=zz)		
 			close(zz)
 			system(paste('qsub -A q1086 ',spp,'.sh',sep=''))
-		}		
+		}
+		system('sleep 30')
 	}
 }
 
