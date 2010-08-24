@@ -6,10 +6,10 @@ script2run = "/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/010.script2run.R"
 
 #define the basic argument for the single species run
 arg.maxent = 'maxent="/home/uqvdwj/WallaceInitiative/maxent.jar" '#ensure trailing space
-arg.models = 'models=FALSE ' #ensure trailing space
-arg.project = 'project=FALSE ' #ensure trailing space
-arg.summarize = 'summarize=FALSE ' #ensure trailing space
-arg.clip = 'clip=FALSE ' #ensure trailing space
+arg.models = 'models=TRUE ' #ensure trailing space
+arg.project = 'project=TRUE ' #ensure trailing space
+arg.summarize = 'summarize=TRUE ' #ensure trailing space
+arg.clip = 'clip=TRUE ' #ensure trailing space
 arg.rich = 'rich=TRUE ' #ensure trailing space
 arg.clip.dist = 'clip.dist=2000000 ' #ensure trailing space #distance to clip species to
 arg.train.dir = 'train.dir="/home/uqvdwj/WallaceInitiative/training.data/" '
@@ -37,6 +37,7 @@ for (group in groups) {
 			zz = file(paste(spp,'.sh',sep=''),'w')
 				cat('##################################\n',file=zz)
 				cat('#!/bin/bash \n',file=zz)
+				cat('#!/bin/sh \n',file=zz)
 				cat('mkdir -p /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #make a directory on the scratch drive
 				cat('cd /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #move to the temporary
 				cat('cp -af ',proj.dir,' /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the projection files
@@ -48,10 +49,12 @@ for (group in groups) {
 					arg.train.dir,arg.clip.dist,arg.disp.real,arg.disp.opt,"' ",script2run,' ',pbs.dir,spp,'.Rout --no-save \n',sep='',file=zz) #run the R script
 				cat('rm -rf /scratch/uqvdwj/',spp,'/',proj.dir.name,'\n',sep='',file=zz) #remove the projection directory
 				cat('cp -af /scratch/uqvdwj/',spp,'/ ',base.dir,'\n',sep='',file=zz) #copy over the outputs to the home drive
+				cat('cd /scratch\n',file=zz)#move to the upper level directory
 				cat('rm -rf /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #clean up the scratch space
+				cat('rmdir /scratch/uqvdwj/\n',sep='',file=zz) #remove this directory if it is empty
 				cat('##################################\n',file=zz)		
 			close(zz)
-			system(paste('qsub -m n ',spp,'.sh',sep=''))
+			system(paste('qsub -A q1086 ',spp,'.sh',sep=''))
 		}		
 	}
 }
