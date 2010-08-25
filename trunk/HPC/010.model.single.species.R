@@ -1,5 +1,5 @@
 #define & set the working directory
-pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; setwd(pbs.dir); system('rm -rf *')
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(tmp.pbs); setwd(pbs.dir); system('rm -rf *')
 
 #define the script to run
 script2run = "/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/010.script2run.R"
