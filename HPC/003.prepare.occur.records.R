@@ -24,7 +24,7 @@ for (enviro in enviro.layers) { cat(enviro,'\n'); assign(enviro,read.asc.gz(past
 cellsize = attr(get(enviro.layers[1]),'cellsize')
 
 #define the temporary script folder
-tmp.pbs = paste(work.dir,'tmp.pbs/',sep=''); dir.create(tmp.pbs);
+tmp.pbs = paste(work.dir,'tmp.pbs/',sep=''); dir.create(tmp.pbs); setwd(pbs.dir); system('rm -rf *')
 
 #cycle through each of the raw occurrence files
 for (infile in infiles.occur) {
@@ -61,9 +61,7 @@ for (infile in infiles.occur) {
 #read in the processed occurance files and process them
 infiles.occur = list.files(train.dir,pattern='occur.csv',recursive=TRUE); infiles.occur = gsub('/occur.csv','',infiles.occur)
 
-###note for plants... must put into families...**********************************************
-
-#cycle through each of the files
+#cycle through each of the files and create the necessary R script
 for (infile in infiles.occur) {	cat(infile,'\n')
 	outfile = gsub('/','_',infile)
 	#create a temporary R script
@@ -92,19 +90,23 @@ for (infile in infiles.occur) {	cat(infile,'\n')
 		cat('\n',file=zz)			
 	#close the file
 	close(zz)
-	
-	#create the job submission script
-	zz = file(paste(tmp.pbs,outfile,'.sh',sep=''),'w')
-		cat('#!/bin/bash \n',file=zz)
-		cat('module load R \n',file=zz)
-		cat('cd ',tmp.pbs,' \n',sep='',file=zz)
-		cat('R CMD BATCH ',outfile,'.R ',outfile,'.Rout --no-save \n',sep='',file=zz)
-	#close the file
-	close(zz)
 }
 
 #cycle through and submit all the sh scripts created
 setwd(tmp.pbs)
-sh.files = list.files(,pattern='\\.sh')
-for (sh.file in sh.files) { system(paste('qsub -A q1086 ',sh.file,sep='')) }
- 
+R.files = list.files(,pattern='\\.R')
+#create a datafile for R scripts to be run
+zz = file('occur.dat','w')
+	for (tfile in R.files) cat(tfile,'\n',sep='',file=zz)
+close(zz)
+#create a pbs to submit an job array
+zz = file('occur.pbs','w')
+	cat('#!/bin/bash \n',file=zz)
+	cat('module load R \n',file=zz)
+	cat('cd ',tmp.pbs,' \n',sep='',file=zz)
+	cat('infile=$(sed -n $[PBS_ARRAY_INDEX]p occur.dat)\n',file=zz)
+	cat('outfile=${infile}out\n',file=zz)
+	cat('R CMD BATCH --no-save ${infile} ${outfile}\n',sep='',file=zz)
+close(zz)
+#submit the pbs job array
+system(paste('qsub -A q1086 -J 1-',length(R.files),' occur.pbs',sep=''))
