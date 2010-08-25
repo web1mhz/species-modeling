@@ -37,23 +37,26 @@ for (group in groups) { cat(group,'\n')
 			#create a sh script to submit the species summary job
 			zz = file(paste(spp,'.sh',sep=''),'w')
 				cat('#!/bin/bash \n',file=zz)
-				cat('#!/bin/sh \n',file=zz)
+				cat("echo $PBS_NODEFILE \n",file=zz)
 				cat('mkdir -p /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #make a directory on the scratch drive
+				cat("echo 'direcoty created' \n",file=zz)
 				cat('cd /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #move to the temporary
 				cat('cp -af ',proj.dir,' /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the projection files
 				cat('cp -af ',base.dir,spp,'/* /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the occurences & background files
 				arg.proj.dir = paste('proj.dir="/scratch/uqvdwj/',spp,'/',proj.dir.name,'/" ',sep='') #ensure trailing space #define the projection directory
 				arg.work.dir = paste('work.dir="/scratch/uqvdwj/',spp,'/" ',sep='')
+				cat("echo 'data copied' \n",file=zz)
 				cat('module load R \n',file=zz) #load the necessary module				
 				cat("R CMD BATCH '--args ",arg.spp,arg.work.dir,arg.maxent,arg.proj.dir,arg.models,arg.project,arg.summarize,arg.clip,arg.rich,
 					arg.train.dir,arg.clip.dist,arg.disp.real,arg.disp.opt,"' ",script2run,' ',pbs.dir,spp,'.Rout --no-save \n',sep='',file=zz) #run the R script
+				cat("echo 'R run & cleaning up' \n",file=zz)
 				cat('rm -rf /scratch/uqvdwj/',spp,'/',proj.dir.name,'\n',sep='',file=zz) #remove the projection directory
 				cat('cp -af /scratch/uqvdwj/',spp,'/ ',base.dir,'\n',sep='',file=zz) #copy over the outputs to the home drive
 				cat('cd /scratch\n',file=zz)#move to the upper level directory
 				cat('rm -rf /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #clean up the scratch space
-				cat('rmdir /scratch/uqvdwj/\n',sep='',file=zz) #remove this directory if it is empty
+				cat("echo 'DONE' \n",file=zz)
 			close(zz)
-			system(paste('qsub -A q1086 ',spp,'.sh',sep=''))
+			system(paste('qsub -A q1086 -k oe ',spp,'.sh',sep=''))
 		}
 		system('sleep 30')
 	}
