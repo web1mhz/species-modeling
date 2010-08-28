@@ -1,5 +1,5 @@
 #define & set the working directory
-pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(tmp.pbs); setwd(pbs.dir); system('rm -rf *')
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(pbs.dir); setwd(pbs.dir); system('rm -rf *')
 
 #define the script to run
 script2run = "/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/010.script2run.R"
@@ -35,14 +35,16 @@ for (group in groups) { cat(group,'\n')
 		for (spp in species) {
 			arg.spp = paste('spp=',spp,' ',sep='')
 			#create a sh script to submit the species summary job
-			zz = file(paste(spp,'.sh',sep=''),'w')
+			zz = file(paste(base.dir,spp,'/model.sh',sep=''),'w')
 				cat('#!/bin/bash \n',file=zz)
+				cat('source /etc/profile \n',file=zz)
 				cat("echo $PBS_NODEFILE \n",file=zz)
 				cat('mkdir -p /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #make a directory on the scratch drive
 				cat("echo 'direcoty created' \n",file=zz)
 				cat('cd /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #move to the temporary
 				cat('cp -af ',proj.dir,' /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the projection files
-				cat('cp -af ',base.dir,spp,'/* /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the occurences & background files
+				cat('cp -af ',base.dir,spp,'/occur.csv /scratch/uqvdwj/',spp,'/occur.csv \n',sep='',file=zz) #copy over the occurences & background files
+				cat('cp -af ',base.dir,spp,'/bkgd.csv /scratch/uqvdwj/',spp,'/bkgd.csv \n',sep='',file=zz) #copy over the occurences & background files
 				arg.proj.dir = paste('proj.dir="/scratch/uqvdwj/',spp,'/',proj.dir.name,'/" ',sep='') #ensure trailing space #define the projection directory
 				arg.work.dir = paste('work.dir="/scratch/uqvdwj/',spp,'/" ',sep='')
 				cat("echo 'data copied' \n",file=zz)
@@ -56,9 +58,30 @@ for (group in groups) { cat(group,'\n')
 				cat('rm -rf /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #clean up the scratch space
 				cat("echo 'DONE' \n",file=zz)
 			close(zz)
-			system(paste('qsub -A q1086 -k oe ',spp,'.sh',sep=''))
 		}
-		system('sleep 30')
+		if (length(species)==1) {
+			#write out a pbs file to submit the job
+			zz = file(paste(fam,'.pbs',sep=''),'w')
+				#cat('#!/bin/bash \n',file=zz)
+				cat('#!/bin/sh \n',file=zz)
+				cat('sh ',base.dir,spp,'/model.sh \n',sep='',file=zz)
+			close(zz)
+			#submit the pbs job array
+			system(paste('qsub -A q1086 -l NodeType=medium ',fam,'.pbs',sep=''))
+		} else {
+			#write out a list of species specific model sh files
+			writeLines(paste(base.dir,species,'/model.sh',sep=''),paste(pbs.dir,fam,'.dat',sep=''))
+			#write out a job array pbs script to submit the family jobs
+			zz = file(paste(fam,'.pbs',sep=''),'w')
+				cat('#!/bin/bash \n',file=zz)
+				cat('file=$(sed -n $[PBS_ARRAY_INDEX]p ',pbs.dir,fam,'.dat) \n',sep='',file=zz)
+				cat('echo $file\n',file=zz)
+				cat('sh $file \n',sep='',file=zz)
+			close(zz)
+			#submit the pbs job array
+			system(paste('qsub -A q1086 -l NodeType=medium -J 1-',length(species),' ',fam,'.pbs',sep=''))
+		}
+		system('sleep 15')
 	}
 }
 
