@@ -15,8 +15,8 @@ arg.clip.dist = 'clip.dist=2000000 ' #ensure trailing space #distance to clip sp
 arg.train.dir = 'train.dir="/home/uqvdwj/WallaceInitiative/training.data/" '
 
 #define some directories
-proj.dir = '/home/uqvdwj/WallaceInitiative/projecting.data/'
 proj.dir.name = 'projecting.data'
+proj.tar.file = '/home/uqvdwj/WallaceInitiative/projecting.data.tar'
 model.dir = '/home/uqvdwj/WallaceInitiative/models/'
 
 groups = list.files(model.dir)#list the taxonomic groups of species
@@ -28,11 +28,11 @@ for (group in groups) { cat(group,'\n')
 	if (group=='aves' | group=='mammalia') { arg.disp.real = 'disp.real=1500 '; arg.disp.opt = 'disp.opt=3000 ' } #ensure trailing space
 	if (group=='amphibia' | group=='reptilia' | group=='plantae') { arg.disp.real = 'disp.real=100 '; arg.disp.opt = 'disp.opt=500 ' } #ensure trailing space		
 	#cycle through the families
-	for (fam in families) { cat('    ',fam,'\n')
+	for (fam in families) { cat('    ',fam)
 		base.dir = paste(model.dir,group,'/',fam,'/',sep='') #get the base working directory
 		species = list.files(base.dir)#list the species for which we have occurrences
 		#cycle through each of the species
-		for (spp in species) {
+		for (spp in species) { cat('.')
 			arg.spp = paste('spp=',spp,' ',sep='')
 			#create a sh script to submit the species summary job
 			zz = file(paste(base.dir,spp,'/model.sh',sep=''),'w')
@@ -42,7 +42,9 @@ for (group in groups) { cat(group,'\n')
 				cat('mkdir -p /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #make a directory on the scratch drive
 				cat("echo 'direcoty created' \n",file=zz)
 				cat('cd /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #move to the temporary
-				cat('cp -af ',proj.dir,' /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the projection files
+				cat('cp -af ',proj.tar.file,' /scratch/uqvdwj/',spp,'\n',sep='',file=zz) #copy over the projection tar file
+				cat('tar -xvf ',proj.dir.name,'.tar \n',sep='',file=zz) #untar the file
+				cat('rm -f ',proj.dir.name,'.tar \n',sep='',file=zz) #remove the tar file
 				cat('cp -af ',base.dir,spp,'/occur.csv /scratch/uqvdwj/',spp,'/occur.csv \n',sep='',file=zz) #copy over the occurences & background files
 				cat('cp -af ',base.dir,spp,'/bkgd.csv /scratch/uqvdwj/',spp,'/bkgd.csv \n',sep='',file=zz) #copy over the occurences & background files
 				arg.proj.dir = paste('proj.dir="/scratch/uqvdwj/',spp,'/',proj.dir.name,'/" ',sep='') #ensure trailing space #define the projection directory
@@ -81,7 +83,8 @@ for (group in groups) { cat(group,'\n')
 			#submit the pbs job array
 			system(paste('qsub -A q1086 -l NodeType=medium -J 1-',length(species),' ',fam,'.pbs',sep=''))
 		}
-		system('sleep 15')
+		cat('\n')
+		#system('sleep 15')
 	}
 }
 
