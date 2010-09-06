@@ -84,7 +84,7 @@ for (group in groups) { cat(group,'\n')
 			system(paste('qsub -A q1086 -l NodeType=medium -J 1-',length(species),' ',fam,'.pbs',sep=''))
 		}
 		cat('\n')
-		#system('sleep 15')
+		system('sleep 10')
 	}
 }
 
