@@ -11,7 +11,7 @@ for(i in 1:length(args)) {
 # work.dir="/home/uqvdwj/WallaceInitiative/models/amphibia/Ambystomatidae/13800736/"
 # maxent="/home/uqvdwj/WallaceInitiative/maxent.jar"
 # proj.dir="/home/uqvdwj/WallaceInitiative/projecting.data/"
-# train.dir="/home/uqvdwj/WallaceInitiative/training.data/" #define the directory where generic training data is
+# mask.pos.file = '/home/uqvdwj/WallaceInitiative/training.data/mask.pos.csv' #define mask basic positions
 # models=TRUE
 # project=TRUE
 # summarize=TRUE
@@ -85,7 +85,7 @@ summarize.species =function() {
 
 	###########################################################################################
 	#create a summary dataset for applying dispersal and richness to
-	pos = out = read.csv(paste(train.dir,'mask.pos.csv',sep=''),as.is=TRUE)
+	pos = out = read.csv(mask.pos.file,as.is=TRUE)
 	#append the occurrences
 	toccur = occur[,c('lat','lon')]; 
 	lats = unique(pos$lat)-0.25; lats = c(lats,max(lats+0.5)); lats = sort(lats)

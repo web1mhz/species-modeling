@@ -24,7 +24,7 @@ for (enviro in enviro.layers) { cat(enviro,'\n'); assign(enviro,read.asc.gz(past
 cellsize = attr(get(enviro.layers[1]),'cellsize')
 
 #define the temporary script folder
-tmp.pbs = paste(work.dir,'tmp.pbs/',sep=''); dir.create(tmp.pbs); setwd(pbs.dir); system('rm -rf *')
+tmp.pbs = paste(work.dir,'tmp.pbs/',sep=''); dir.create(tmp.pbs); setwd(tmp.pbs); system('rm -rf *')
 
 #cycle through each of the raw occurrence files
 for (infile in infiles.occur) {
@@ -86,6 +86,7 @@ for (infile in infiles.occur) {	cat(infile,'\n')
 		cat("    out.bkgd = NULL; for (ii in tbkgd) out.bkgd = rbind(out.bkgd,get(paste('bkgd.',ii,sep=''))) #grab the background data for the domains \n",file=zz)
 		cat("    write.csv(out.bkgd,paste(spp,'/bkgd.csv',sep=''),row.names=F) #write out the data \n",file=zz)
 		cat("    write.csv(out.occur,paste(spp,'/occur.csv',sep=''),row.names=F) #write out the data \n",file=zz)
+		cat("    system(paste('tar --remove-files -czf ',spp,'.tar.gz ',spp,' ',sep='')) #tar the data \n",file=zz)
 		cat("} \n",file=zz)
 		cat('\n',file=zz)			
 	#close the file
@@ -102,6 +103,7 @@ close(zz)
 #create a pbs to submit an job array
 zz = file('occur.pbs','w')
 	cat('#!/bin/bash \n',file=zz)
+	cat('(sleep $(( ($PBS_ARRAY_INDEX % 10) * 5 )))\n',file=zz)
 	cat('module load R \n',file=zz)
 	cat('cd ',tmp.pbs,' \n',sep='',file=zz)
 	cat('infile=$(sed -n $[PBS_ARRAY_INDEX]p occur.dat)\n',file=zz)
