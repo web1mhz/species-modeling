@@ -1,5 +1,54 @@
-#define & set the working directory
-pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs4/'; dir.create(pbs.dir); setwd(pbs.dir); system('rm -rf *')
+#define the working directory
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs.check/'; setwd(pbs.dir); system('rm -rf *')
+
+data.dir = '/home/uqvdwj/WallaceInitiative/models/' #define where the models are
+taxas = list.files(data.dir) #list the taxas
+for (taxa in taxas) { #cycle through each of the taxa
+	cat(taxa,'\n')
+	fams = list.files(paste(data.dir,taxa,sep='')) #list the families
+	for (fam in fams) { #cycle through the fams
+		cat('   ',fam,'\n')
+		#create a pbs to submit an job array
+		zz = file(paste(fam,'.pbs',sep=''),'w')
+			cat('#!/bin/bash \n',file=zz)
+			cat('cd ',data.dir,taxa,'/',fam,'/ \n',sep='',file=zz)
+			cat('mkdir -p /scratch/uqvdwj/\n',file=zz) #make a directory on the scratch drive
+			cat('for tfile in ./* \n',sep='',file=zz)
+			cat('do \n',sep='',file=zz)
+			cat('tar -tf $tfile > /scratch/uqvdwj/',fam,'.txt \n',sep='',file=zz)
+			cat('if [[ ! $? -eq 0 ]] ; then rm -f $tfile ; echo $tfile >> ',pbs.dir,fam,'.deleted.txt ; fi \n',sep='',file=zz)
+			cat('done \n',sep='',file=zz)
+			cat('rm -f /scratch/uqvdwj/',fam,'.txt \n',sep='',file=zz)
+		close(zz)
+		#submit the pbs job array
+		system(paste('qsub -A q1086 ',fam,'.pbs',sep=''))
+	}
+	system('sleep 60')
+}
+
+
+################################################################################
+#define the working directory
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(pbs.dir); setwd(pbs.dir); system('rm -rf *')
+
+out.dir = '/home/uqvdwj/WallaceInitiative/models/' #define where the models are
+in.dir = '/home/uqvdwj/WallaceInitiative/CHECK/' #define where the models are
+
+out.files = list.files(out.dir,pattern='tar.gz',recursive=TRUE) #list the files that are done
+in.files = list.files(in.dir,pattern='tar.gz',recursive=TRUE) #list the complete set that should have been done
+
+diff.in.files = setdiff(in.files,out.files) #find the files that are missing
+diff.out.files = setdiff(out.files,in.files) #find the files copied into the wrong place
+
+#remove the files in the wrong place
+for (tfile in diff.out.files) { cat(tfile,'\n'); unlink(paste(out.dir,tfile,sep='')) }
+
+#recheck the data
+out.files = list.files(out.dir,pattern='tar.gz',recursive=TRUE) #list the files that are done
+in.files = list.files(in.dir,pattern='tar.gz',recursive=TRUE) #list the complete set that should have been done
+
+diff.in.files = setdiff(in.files,out.files) #find the files that are missing
+diff.out.files = setdiff(out.files,in.files) #find the files copied into the wrong place
 
 #define the script to run
 script2run.name = '010.script2run.R'
@@ -20,18 +69,22 @@ proj.dir.name = 'projecting.data'
 proj.tar.file = '/home/uqvdwj/WallaceInitiative/projecting.data.tar'
 model.dir = '/home/uqvdwj/WallaceInitiative/models/'
 
-groups = list.files(model.dir)#list the taxonomic groups of species
 
-#cycle through each of the groups and sumbit species jobs
+
+#break diff.in.files into groups, families, species data.frame
+diff.data = data.frame(groups=rep(NA,length(diff.in.files)),families=NA,species=NA)
+for (ii in 1:length(diff.in.files)) { tt = strsplit(diff.in.files[ii],'/')[[1]]; diff.data[ii,] = tt }
+
+#now cycle through and setup the jobs arrays
+groups = unique(diff.data$groups)
 for (group in groups) { cat(group,'\n')
-	families = list.files(paste(model.dir,group,'/',sep='')) #get alist of families
+	families = unique(diff.data$families[which(diff.data$groups==group)]) #get alist of families
 	#setup more of th arguments
 	if (group=='aves' | group=='mammalia') { arg.disp.real = 'disp.real=1500 '; arg.disp.opt = 'disp.opt=3000 ' } #ensure trailing space
 	if (group=='amphibia' | group=='reptilia' | group=='plantae') { arg.disp.real = 'disp.real=100 '; arg.disp.opt = 'disp.opt=500 ' } #ensure trailing space		
 	#cycle through the families
 	for (fam in families) { cat('    ',fam)
-		base.dir = paste(model.dir,group,'/',fam,'/',sep='') #get the base working directory
-		species = list.files(base.dir,pattern='\\.tar.gz'); species = gsub('\\.tar.gz','',species)#list the species for which we have occurrences
+		species = unique(diff.data$species[which(diff.data$groups==group & diff.data$families==fam)]); species = gsub('\\.tar.gz','',species)#list the species for which we have occurrences
 		dir.create(fam)#create the pbs directory
 		#cycle through the species
 		for (ii in 1:length(species)) { cat('.')
@@ -51,7 +104,7 @@ for (group in groups) { cat(group,'\n')
 				arg.maxent = 'maxent="/scratch/uqvdwj/maxent.jar" '#ensure trailing space
 				arg.mask.pos.file = 'mask.pos.file="/scratch/uqvdwj/mask.pos.csv" '#ensure trailing space
 				arg.proj.dir = paste('proj.dir="/scratch/uqvdwj/',proj.dir.name,'/" ',sep='') #ensure trailing space #define the projection directory
-				cat('cp -af ',base.dir,spp,'.tar.gz /scratch/uqvdwj/\n',sep='',file=zz) #copy over the species tar file
+				cat('cp -af ',in.dir,group,'/',fam,'/',spp,'.tar.gz /scratch/uqvdwj/\n',sep='',file=zz) #copy over the species tar file
 				cat('tar -xf ',spp,'.tar.gz \n',sep='',file=zz) #untar the file
 				cat('rm -f ',spp,'.tar.gz \n',sep='',file=zz) #remove the tar file
 				arg.spp = paste('spp=',spp,' ',sep='')
@@ -61,7 +114,7 @@ for (group in groups) { cat(group,'\n')
 					script2run.name,'out \n\n',sep='',file=zz) #run the R script in the background
 				
 				cat('tar --remove-files -czf ',spp,'.tar.gz ',spp,' \n',sep='',file=zz) #tar and gzip all model outputs
-				cat('mv -f ',spp,'.tar.gz ',base.dir,' \n\n',sep='',file=zz) #move all files back to /home
+				cat('mv -f ',spp,'.tar.gz ',out.dir,group,'/',fam,'/ \n\n',sep='',file=zz) #move all files back to /home
 			close(zz)
 		}
 		#setup job submission
@@ -84,5 +137,5 @@ for (group in groups) { cat(group,'\n')
 
 #find the pbs jobs and submit them
 pbs.files = list.files(pbs.dir,pattern='000.pbs',recursive=TRUE,full.names=TRUE); pbs.files=gsub('//','/',pbs.files); pbs.files=gsub('000.pbs','',pbs.files) #get a list of the pbs files
-for (pbs in pbs.files) { setwd(pbs); system('qsub -A q1086 -l NodeType=medium 000.pbs'); system('sleep 60') } #submit the jobs
+for (pbs in pbs.files) { setwd(pbs); system('qsub -A q1086 -l NodeType=medium 000.pbs'); system('sleep 15') } #submit the jobs
 
