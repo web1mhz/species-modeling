@@ -34,6 +34,8 @@ pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(pbs.dir); setwd(
 out.dir = '/home/uqvdwj/WallaceInitiative/models/' #define where the models are
 in.dir = '/home/uqvdwj/WallaceInitiative/CHECK/' #define where the models are
 
+##***NOTE the indir here is just a original occurance scripts (003) run with outputs put into the new directory
+
 out.files = list.files(out.dir,pattern='tar.gz',recursive=TRUE) #list the files that are done
 in.files = list.files(in.dir,pattern='tar.gz',recursive=TRUE) #list the complete set that should have been done
 
