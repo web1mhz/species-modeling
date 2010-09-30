@@ -1,5 +1,9 @@
 #!/bin/bash
 
+source /etc/profile.d/modules.sh
+
+module load ImageMagick
+
 #define the base directory
 BASEDIR=/data/jc165798/tmp2/amphibia
 cd $BASEDIR
@@ -61,9 +65,6 @@ do
 	do
 	 convert "$file" "$TARGET_GRADIENT" -clut "$file"
 	 mogrify -channel a -threshold 50% "$file"
-	 #Commented out due to bugs in ImageMagick.
-	 #COLOUR_COUNT=`identify -format %k "$file"`
-	 #mogrify +dither -colors $COLOUR_COUNT -type optimize "$file"
 	done
 
 	#Create our visual scale for our colourisation.  Rotate, resize and add text to our scale image.
