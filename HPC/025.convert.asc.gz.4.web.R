@@ -82,8 +82,7 @@ do
 	###
 	#recompress the asc file
 	gzip *.asc
-		
+	#change file permissions
+	chmod -R o-rx .
 done
 
-#Set this environmental variable depending on host system and where gdal libraries live
-export LD_LIBRARY_PATH=/usr/local/lib/:/usr/lib64/
