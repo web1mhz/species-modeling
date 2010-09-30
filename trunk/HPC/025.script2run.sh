@@ -2,16 +2,17 @@
 source /etc/profile.d/modules.sh
 module load ImageMagick
 
-#define the base directory
-BASEDIR=/data/jc165798/tmp2/amphibia
+#define the base directory & if this is a richness dataset from commandline args
+BASEDIR=$1
 cd $BASEDIR
+IS_RICHNESS_DATASET=$2;           #Affects colour output - 0 value for green, 1 value for rainbow
 
 for tfile in `find $BASEDIR -name '*asc.gz'`
 do
 	echo $tfile
 	#define, make and move to the output directory
 	OUTDIR=${tfile//\.asc\.gz/}
-	OUTDIR=${OUTDIR//tmp2/maps}
+	OUTDIR=${OUTDIR//GIS/maps}
 	mkdir -p $OUTDIR
 	cd $OUTDIR
 	
@@ -23,7 +24,6 @@ do
 	#These details should be changed per dataset, if necessary.
 	TARGET_DIRECTORY=$OUTDIR;      #Controls where tiles are outputted
 	DATASET_FILE=$(basename $tfile); DATASET_FILE=${DATASET_FILE//\.gz/} #Actual dataset location to be processed
-	IS_RICHNESS_DATASET=1;           #Affects colour output - 0 value for green, 1 value for rainbow
 	NODATA_VALUE="-9999";            #Set the nodata value for alpha channel production
 	
 	#setup the maximum
