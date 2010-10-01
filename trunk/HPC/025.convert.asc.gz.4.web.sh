@@ -18,3 +18,18 @@ do
 	
 	qsub ${tdir}.sh
 done
+
+#now do the individual species
+SPPDIR=${BASEDIR}/species
+
+for tdir in `find $SPPDIR -type d -maxdepth 2 -mindepth 2`
+do
+	echo $tdir
+	tfile=`basename $tdir`
+	cd /data/jc165798/tmppbs/
+	echo '#!/bin/bash' > ${tfile}.sh
+	echo 'source /etc/profile.d/modules.sh' >> ${tfile}.sh
+	echo 'sh /home1/31/jc165798/SCRIPTS/WallaceInitiative/HPC/025.script2run.sh' $tdir 0 >> ${tfile}.sh
+	qsub -l nodes=1:ppn=2 ${tfile}.sh
+	sleep 1
+done
