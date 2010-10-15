@@ -31,7 +31,7 @@ do
 	echo '#!/bin/bash' > ${tfile}.sh
 	echo 'source /etc/profile.d/modules.sh' >> ${tfile}.sh
 	echo 'sh /home1/31/jc165798/SCRIPTS/WallaceInitiative/HPC/025.script2run.sh' $tdir 0 >> ${tfile}.sh
-	qsub -l nodes=1:ppn=2 ${tfile}.sh
+	qsub -m n -l nodes=1:ppn=1:V20Z ${tfile}.sh
 	sleep 1
 done
 
