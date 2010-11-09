@@ -7,12 +7,15 @@ BASEDIR=$1
 cd $BASEDIR
 IS_RICHNESS_DATASET=$2;           #Affects colour output - 0 value for green, 1 value for rainbow
 
+COREDIR=/data/jc165798/WallaceSummaries/summaries/maps
+
 for tfile in `find $BASEDIR -name '*asc.gz'`
 do
 	echo $tfile
 	#define, make and move to the output directory
 	OUTDIR=${tfile//\.asc\.gz/}
 	OUTDIR=${OUTDIR//GIS/maps}
+	OUTDIR=${OUTDIR//${COREDIR}/'/ctbccr/datasets'}
 	mkdir -p $OUTDIR
 	chmod 775 $OUTDIR
 	cd $OUTDIR
