@@ -27,11 +27,10 @@ train.dir = '/home/uqvdwj/WallaceInitiative/training.data/' #define the director
 pos = read.csv(paste(train.dir,'mask.pos.csv',sep=''),as.is=TRUE)
 mask = read.asc.gz(paste(train.dir,'mask.asc.gz',sep=''))
 
-#copy over the data files
-file.copy(list.files(paste(base.dir,'models/',group,'/',fam,sep=''),pattern='tar.gz',full.names=TRUE),tmp.dir,overwrite=TRUE) 
-
 #get a list of species to be summariezed
-species = list.files(,pattern='tar.gz'); species = gsub('\\.tar.gz','',species) 
+species = list.files(paste(base.dir,'models/',group,'/',fam,sep=''),pattern='tar.gz'); species = gsub('\\.tar.gz','',species) 
+#define the output dir for the species GIS files
+spp.out.dir = paste(base.dir,'summaries/GIS/species/',group,'/',fam,'/',sep=''); dir.create(spp.out.dir,recursive=TRUE)
 
 #data to be tracked
 out.area = NULL #this is the output of the areas
@@ -40,7 +39,11 @@ no.sum = no.loss = real.sum = real.loss = real.gain = opt.sum = opt.loss = opt.g
 
 #cycle through each of the species and extract the necessary info
 for (spp in species) { cat(spp,'\n')
+	#copy over the data files
+	file.copy(paste(base.dir,'models/',group,'/',fam,'/',spp,'.tar.gz',sep=''),tmp.dir,overwrite=TRUE) 
 	untar(paste(spp,'.tar.gz',sep='')) #untar the species data
+	unlink(paste(spp,'.tar.gz',sep='')) #remove the tar file
+	
 	### start with area of the predictions
 	tfile = paste(spp,'/summaries/prediction.area.csv.gz',sep='')
 	if (file.exists(tfile)) {
@@ -107,10 +110,12 @@ for (spp in species) { cat(spp,'\n')
 				tasc[which(tasc<threshold)]=0 #remove anything below the threshold
 				write.asc.gz(tasc,paste(tdir,year,'_',ES,'_mean.asc',sep='')) #write out the current gis file
 			}
-		}	
+		}
+		#now copy the species GIS files
+		file.copy(paste(spp,'/occur.csv',sep=''),paste('GIS/species/',spp,'/occur.csv',sep=''),overwrite=TRUE)
+		system(paste('cp -af GIS/species/',spp,' ',spp.out.dir,sep=''))
+		system(paste('rm -rf GIS/species/',spp,sep=''))
 	}
-	
-	
 }
 
 #write out some of the data
@@ -145,9 +150,6 @@ file.copy('area/predicted.area.csv.gz',paste(out.dir,'predicted.area.csv.gz',sep
 #now for the richness info
 out.dir = paste(base.dir,'summaries/richness/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
 file.copy(list.files('richness',pattern='csv.gz',full.names=TRUE),out.dir,overwrite=TRUE)
-#now copy the species GIS files
-out.dir = paste(base.dir,'summaries/GIS/species/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
-system(paste('cp -af GIS/species/* ',out.dir,sep=''))
 #now copy the species GIS files
 out.dir = paste(base.dir,'summaries/GIS/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
 file.copy(list.files('GIS/richness',pattern='asc.gz',full.names=TRUE),out.dir,overwrite=TRUE)

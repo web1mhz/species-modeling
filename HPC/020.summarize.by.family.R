@@ -24,7 +24,7 @@ for (group in groups) { cat(group,'\n')
 			cat("R CMD BATCH --no-save '--args ",arg.group,arg.fam,"' ",script2run,' ',fam,'.Rout\n',sep='',file=zz)
 		close(zz)
 		#submit the job
-		system(paste('qsub -A q1086 -l select=1:ncpus=2:NodeType=medium ',fam,'.pbs',sep=''))
-		system('sleep 5')
+		system(paste('qsub -A q1086 -l select=1:ncpus=4:NodeType=medium ',fam,'.pbs',sep=''))
+		#system('sleep 5')
 	}
 }
