@@ -2,7 +2,7 @@
 source /etc/profile.d/modules.sh
 
 #define the base directory
-BASEDIR=/data/jc165798/WallaceSummaries/summaries/GIS
+BASEDIR=/ctbccr/scratch/summaries/GIS
 
 # first setup the species richness
 TMPDIR=${BASEDIR}/family
