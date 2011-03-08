@@ -1,10 +1,14 @@
+#drafted by Jeremy VanDerWal ( jjvanderwal@gmail.com ... www.jjvanderwal.com )
+#GNU General Public License .. feel free to use / distribute ... no warranties
 
+################################################################################
+################################################################################
 #define the necessary info
-pbs.dir = '/data/jc165798/WallaceInitiative/tmp.pbs2/'; setwd(pbs.dir); system('rm -rf *')
-script2run = '/home1/31/jc165798/SCRIPTS/WallaceInitiative/HPC/030.script2run.R'
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; setwd(pbs.dir); system(paste('rm -rf ',pbs.dir,sep=''))
+script2run = '/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/030.script2run.R'
 
-model.dir = '/data/jc165798/WallaceInitiative/models/'
-groups = list.files(model.dir); groups = groups[c(3,1,4,2)] #start with mammals ***** fix for plants
+model.dir = '/home/uqvdwj/WallaceInitiative/summaries/area/family/'
+groups = list.files(model.dir) #get a list of the groups
 
 #cycle through each of the species groups
 for (group in groups){ 
@@ -12,9 +16,11 @@ for (group in groups){
 	zz = file(paste(group,'.sh',sep=''),'w')
 		cat('##################################\n',file=zz)
 		cat('#!/bin/sh\n',file=zz)
+		cat('source /etc/profile\n',file=zz)
+		cat('module load R\n',file=zz)
 		cat('cd $PBS_O_WORKDIR\n',file=zz)
-		cat("R CMD BATCH '--args group=",'"',group,'"',"' ",script2run,' ',pbs.dir,group,'.Rout --no-save \n',sep='',file=zz)
+		cat("R CMD BATCH '--args group=",'"',group,'"',"' ",script2run,' ',pbs.dir,group,'.Rout\n',sep='',file=zz)
 		cat('##################################\n',file=zz)		
 	close(zz)
-	system(paste('qsub -l nodes=1:ppn=8 ',group,'.sh',sep=''))
+	system(paste('qsub -l select=1:ncpus=4:NodeType=medium -A q1086 -l walltime=100:00:00 ',group,'.sh',sep=''))
 }
