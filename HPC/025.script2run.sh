@@ -7,7 +7,7 @@ BASEDIR=$1
 cd $BASEDIR
 IS_RICHNESS_DATASET=$2;           #Affects colour output - 0 value for green, 1 value for rainbow
 
-COREDIR=/data/jc165798/WallaceSummaries/summaries/maps
+COREDIR=/ctbccr/scratch/summaries/GIS
 
 for tfile in `find $BASEDIR -name '*asc.gz'`
 do
