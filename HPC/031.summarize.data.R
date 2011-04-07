@@ -1,5 +1,11 @@
+#drafted by Jeremy VanDerWal ( jjvanderwal@gmail.com ... www.jjvanderwal.com )
+#GNU General Public License .. feel free to use / distribute ... no warranties
+
+################################################################################
+################################################################################
 #define the directories
-work.dir = '/data/jc165798/WallaceInitiative/richness/avoid.ms/'; setwd(work.dir)
+work.dir = '/home/uqvdwj/WallaceInitiative/ms/avoid.ms/'; dir.create(work.dir,recursive=TRUE); setwd(work.dir)
+data.dir = '/home/uqvdwj/WallaceInitiative/summaries/area/taxa/'
 
 ###################################################################################################
 #define some common functions
@@ -34,10 +40,25 @@ summarize.status.counts = function(tdata) {
 	return(out)
 }
 
+summarize.ES.status = function(status,n) {
+	cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status)),grep('vu',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		tt = strsplit(tvar,'\\.')
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tt[[1]][2],iucn=tt[[1]][4],mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+
+
 #create species loss plots for all spp and images
 sum.plot = function(tfile,tdata,status){
 	
-	pdf(tfile,width=7.5,height=10,pointsize=8)
+	pdf(tfile,width=7.2,height=9.6,pointsize=8)
 		par(oma=c(1,3,3,0))
 		layout(matrix(1:12,nr=4,byrow=TRUE))
 		par(mar=c(4,4,1,1))
@@ -99,21 +120,36 @@ sum.plot = function(tfile,tdata,status){
 
 ####################################################################################################
 #read in the data
-amph = read.csv('amphibia.area.csv',as.is=TRUE)
+amph = read.csv(paste(data.dir,'amphibia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 amph.ES.GCM = summarize.ES.GCM(amph); write.csv(amph.ES.GCM,'amphibia.ES.GCM.csv',row.names=FALSE)
 amph.status = summarize.status.counts(amph); write.csv(amph.status,'amphibia.status.counts.csv',row.names=FALSE)
+amph.ES.status = summarize.ES.status(amph.status, length(unique(amph))); write.csv(amph.ES.status,'amphibia.ES.status.csv',row.names=FALSE)
 
-aves = read.csv('aves.area.csv',as.is=TRUE) 
+aves = read.csv(paste(data.dir,'aves/predicted.area.csv.gz',sep=''),as.is=TRUE) 
 aves.ES.GCM = summarize.ES.GCM(aves); write.csv(aves.ES.GCM,'aves.ES.GCM.csv',row.names=FALSE)
 aves.status = summarize.status.counts(aves); write.csv(aves.status,'aves.status.counts.csv',row.names=FALSE)
+aves.ES.status = summarize.ES.status(aves.status, length(unique(aves))); write.csv(aves.ES.status,'aves.ES.status.csv',row.names=FALSE)
 
-mamm = read.csv('mammalia.area.csv',as.is=TRUE)
+mamm = read.csv(paste(data.dir,'mammalia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 mamm.ES.GCM = summarize.ES.GCM(mamm); write.csv(mamm.ES.GCM,'mammalia.ES.GCM.csv',row.names=FALSE)
 mamm.status = summarize.status.counts(mamm); write.csv(mamm.status,'mammalia.status.counts.csv',row.names=FALSE)
+mamm.ES.status = summarize.ES.status(mamm.status, length(unique(mamm))); write.csv(mamm.ES.status,'mammalia.ES.status.csv',row.names=FALSE)
 
-rept = read.csv('reptilia.area.csv',as.is=TRUE)
+rept = read.csv(paste(data.dir,'reptilia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 rept.ES.GCM = summarize.ES.GCM(rept); write.csv(rept.ES.GCM,'reptilia.ES.GCM.csv',row.names=FALSE)
 rept.status = summarize.status.counts(rept); write.csv(rept.status,'reptilia.status.counts.csv',row.names=FALSE)
+rept.ES.status = summarize.ES.status(rept.status, length(unique(rept))); write.csv(rept.ES.status,'reptilia.ES.status.csv',row.names=FALSE)
+
+plant = read.csv(paste(data.dir,'plantae/predicted.area.csv.gz',sep=''),as.is=TRUE)
+plant.ES.GCM = summarize.ES.GCM(plant); write.csv(plant.ES.GCM,'plantae.ES.GCM.csv',row.names=FALSE)
+plant.status = summarize.status.counts(plant); write.csv(plant.status,'plantae.status.counts.csv',row.names=FALSE)
+plant.ES.status = summarize.ES.status(plant.status, length(unique(plant))); write.csv(plant.ES.status,'plantae.ES.status.csv',row.names=FALSE)
+
+animal = rbind(amph, aves, mamm, rept)
+animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM.csv',row.names=FALSE)
+animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
+animal.ES.status = summarize.ES.status(animal.status, length(unique(animal))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
+
 
 #define some variables
 years=c(2020,2050,2080)
@@ -125,7 +161,6 @@ sum.plot('amphibia.summary.pdf',amph,amph.status)
 sum.plot('aves.summary.pdf',aves,aves.status)
 sum.plot('mammalia.summary.pdf',mamm,mamm.status)
 sum.plot('reptilia.summary.pdf',rept,rept.status)
+sum.plot('plantae.summary.pdf',plant,plant.status)
+sum.plot('animal.summary.pdf',animal,animal.status)
 
-all.data = rbind(amph,aves,mamm,rept)
-all.status = summarize.status.counts(all.data)
-sum.plot('all.animals.summary.pdf',all.data,all.status)

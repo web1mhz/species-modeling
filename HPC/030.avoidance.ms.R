@@ -4,7 +4,7 @@
 ################################################################################
 ################################################################################
 #define the necessary info
-pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; setwd(pbs.dir); system(paste('rm -rf ',pbs.dir,sep=''))
+pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; system(paste('rm -rf ',pbs.dir,sep='')); dir.create(pbs.dir); setwd(pbs.dir); 
 script2run = '/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/030.script2run.R'
 
 model.dir = '/home/uqvdwj/WallaceInitiative/summaries/area/family/'
