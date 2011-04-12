@@ -123,17 +123,17 @@ sum.plot = function(tfile,tdata,status){
 amph = read.csv(paste(data.dir,'amphibia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 amph.ES.GCM = summarize.ES.GCM(amph); write.csv(amph.ES.GCM,'amphibia.ES.GCM.csv',row.names=FALSE)
 amph.status = summarize.status.counts(amph); write.csv(amph.status,'amphibia.status.counts.csv',row.names=FALSE)
-amph.ES.status = summarize.ES.status(amph.status, length(unique(amph))); write.csv(amph.ES.status,'amphibia.ES.status.csv',row.names=FALSE)
+amph.ES.status = summarize.ES.status(amph.status, length(unique(amph$spp))); write.csv(amph.ES.status,'amphibia.ES.status.csv',row.names=FALSE)
 
 aves = read.csv(paste(data.dir,'aves/predicted.area.csv.gz',sep=''),as.is=TRUE) 
 aves.ES.GCM = summarize.ES.GCM(aves); write.csv(aves.ES.GCM,'aves.ES.GCM.csv',row.names=FALSE)
 aves.status = summarize.status.counts(aves); write.csv(aves.status,'aves.status.counts.csv',row.names=FALSE)
-aves.ES.status = summarize.ES.status(aves.status, length(unique(aves))); write.csv(aves.ES.status,'aves.ES.status.csv',row.names=FALSE)
+aves.ES.status = summarize.ES.status(aves.status, length(unique(aves$spp))); write.csv(aves.ES.status,'aves.ES.status.csv',row.names=FALSE)
 
 mamm = read.csv(paste(data.dir,'mammalia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 mamm.ES.GCM = summarize.ES.GCM(mamm); write.csv(mamm.ES.GCM,'mammalia.ES.GCM.csv',row.names=FALSE)
 mamm.status = summarize.status.counts(mamm); write.csv(mamm.status,'mammalia.status.counts.csv',row.names=FALSE)
-mamm.ES.status = summarize.ES.status(mamm.status, length(unique(mamm))); write.csv(mamm.ES.status,'mammalia.ES.status.csv',row.names=FALSE)
+mamm.ES.status = summarize.ES.status(mamm.status, length(unique(mamm$spp))); write.csv(mamm.ES.status,'mammalia.ES.status.csv',row.names=FALSE)
 
 rept = read.csv(paste(data.dir,'reptilia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 rept.ES.GCM = summarize.ES.GCM(rept); write.csv(rept.ES.GCM,'reptilia.ES.GCM.csv',row.names=FALSE)
@@ -143,12 +143,12 @@ rept.ES.status = summarize.ES.status(rept.status, length(unique(rept))); write.c
 plant = read.csv(paste(data.dir,'plantae/predicted.area.csv.gz',sep=''),as.is=TRUE)
 plant.ES.GCM = summarize.ES.GCM(plant); write.csv(plant.ES.GCM,'plantae.ES.GCM.csv',row.names=FALSE)
 plant.status = summarize.status.counts(plant); write.csv(plant.status,'plantae.status.counts.csv',row.names=FALSE)
-plant.ES.status = summarize.ES.status(plant.status, length(unique(plant))); write.csv(plant.ES.status,'plantae.ES.status.csv',row.names=FALSE)
+plant.ES.status = summarize.ES.status(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status,'plantae.ES.status.csv',row.names=FALSE)
 
 animal = rbind(amph, aves, mamm, rept)
 animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM.csv',row.names=FALSE)
 animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
-animal.ES.status = summarize.ES.status(animal.status, length(unique(animal))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
+animal.ES.status = summarize.ES.status(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
 
 
 #define some variables
@@ -163,4 +163,33 @@ sum.plot('mammalia.summary.pdf',mamm,mamm.status)
 sum.plot('reptilia.summary.pdf',rept,rept.status)
 sum.plot('plantae.summary.pdf',plant,plant.status)
 sum.plot('animal.summary.pdf',animal,animal.status)
+
+################################################################################
+################################################################################
+#need to extract information on initial sizes of species (n occur & area)
+
+###first get the number of occurrences per species
+wd = '/home/uqvdwj/WallaceInitiative/training.data/occur/'; setwd(wd) #define and set the initial working directory
+occur.files = list.files(,pattern='occur.csv',recursive=TRUE,full.names=TRUE) #get a list of all occurrence files
+out = NULL #default output information
+for (occur.file in occur.files) {cat(occur.file,'\n') #cycle through each of the files
+	tdata = read.csv(occur.file,as.is=TRUE);tdata = na.omit(unique(tdata)) #read in the data, keeping ony data with information and is unique
+	tt = strsplit(occur.file,'/'); taxa = tt[[1]][2]; fam = tt[[1]][3] #define the family and taxa
+	tt = aggregate(tdata$lon,list(tdata$specie_id),length) #get the number of unique occurrences
+	out = rbind(out,data.frame(taxa=taxa,family=fam,species=tt[,1],n_unique_occur_at_10minute=tt[,2])) #append the output
+}
+###now get out the current species area
+wd = '/home/uqvdwj/WallaceInitiative/summaries/area/taxa/'; setwd(wd) #define and set the new working directory
+tfiles = list.files(,pattern='predicted.area.csv.gz',recursive=TRUE,full.names=TRUE) #get a list of all area files
+out2 = NULL #setup the default output
+for (tfile in tfiles) {cat(tfile,'\n') #cycle through each of the files
+	tdata = read.csv(tfile,as.is=TRUE);tdata = tdata[which(tdata$ES=='current'),c('spp','area.no.disp')] #read in the data, keeping ony data on current area
+	out2 = rbind(out2,tdata) #append the output
+}
+#now bring both datasets together
+output = merge(out,out2,by.x='species',by.y='spp')
+names(output)[5] = 'area_km2'
+###now create some summaries
+wd = '/home/uqvdwj/WallaceInitiative/ms/avoid.ms/'; setwd(wd) #define and set the new working directory
+write.csv(output,'n_occur.and.area.csv',row.names=FALSE) #write out the summary data
 
