@@ -138,7 +138,7 @@ mamm.ES.status = summarize.ES.status(mamm.status, length(unique(mamm$spp))); wri
 rept = read.csv(paste(data.dir,'reptilia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 rept.ES.GCM = summarize.ES.GCM(rept); write.csv(rept.ES.GCM,'reptilia.ES.GCM.csv',row.names=FALSE)
 rept.status = summarize.status.counts(rept); write.csv(rept.status,'reptilia.status.counts.csv',row.names=FALSE)
-rept.ES.status = summarize.ES.status(rept.status, length(unique(rept))); write.csv(rept.ES.status,'reptilia.ES.status.csv',row.names=FALSE)
+rept.ES.status = summarize.ES.status(rept.status, length(unique(rept$spp))); write.csv(rept.ES.status,'reptilia.ES.status.csv',row.names=FALSE)
 
 plant = read.csv(paste(data.dir,'plantae/predicted.area.csv.gz',sep=''),as.is=TRUE)
 plant.ES.GCM = summarize.ES.GCM(plant); write.csv(plant.ES.GCM,'plantae.ES.GCM.csv',row.names=FALSE)
