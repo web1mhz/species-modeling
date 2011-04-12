@@ -1,4 +1,9 @@
-##############################################
+#drafted by Jeremy VanDerWal ( jjvanderwal@gmail.com ... www.jjvanderwal.com )
+#GNU General Public License .. feel free to use / distribute ... no warranties
+
+################################################################################
+################################################################################
+###not sure what this is supposed to do when added above...
 #merge and summarize the richness outputs
 
 #define and set the working directory
