@@ -192,4 +192,70 @@ names(output)[5] = 'area_km2'
 ###now create some summaries
 wd = '/home/uqvdwj/WallaceInitiative/ms/avoid.ms/'; setwd(wd) #define and set the new working directory
 write.csv(output,'n_occur.and.area.csv',row.names=FALSE) #write out the summary data
+#output = read.csv('n_occur.and.area.csv',as.is=TRUE) #read in the summaries
+###first work with number of occurrences
+tbreaks = c(9,20,40,60,100,250,500,1000,2500,5000,15000); tlabels = c('>20','20-40','40-60','60-100','100-250','250-500','500-1000','1000-2500','2500-5000','<5000') #define the breaks and labels
+tt2 = as.character(cut(output$n_unique_occur_at_10minute,breaks=tbreaks,labels=tlabels)) #cut the data and relabel it 
+tt3 = aggregate(tt2,by=list(taxa=output$taxa,bins=tt2),length)#get the counts
+out = data.frame(bins=tlabels,stringsAsFactors=FALSE) #define a new output data frame
+for(taxa in unique(tt3$taxa)) { #cycle through each of the taxa
+	out[taxa] = 0 #set eveything in column to 0
+	for (ii in 1:nrow(out)) { #cycle through each of the bins and extract the count information
+		tval = which(tt3$taxa==taxa & tt3$bins==out$bins[ii])
+		if (length(tval)>0) { out[ii,taxa] = tt3$x[tval] }
+	}
+}
+out$animals = rowSums(out[,c('amphibia','aves','mammalia','reptilia')]) #get the animal column
+out.prop = out; for (ii in 2:ncol(out.prop)) out.prop[,ii] = out.prop[,ii] / sum(out.prop[,ii]) #convert to proportions
+pdf('histogram_ncells.pdf',width=3.5*2,height=3.5*3,pointsize=12) #create the plot
+	par(mar=c(4,2,1,0.6),mfrow=c(3,2),oma=c(3,3,0,0))
+	bp = barplot(out.prop$plantae,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Plantae',bty='n',cex=1.5)#plot the plants
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$animal,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Animalia',bty='n',cex=1.5)#plot the animals
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$amphibia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Amphibia',bty='n',cex=1.5)#plot the amph
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$aves,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Aves',bty='n',cex=1.5)#plot the birds
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$mammalia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Mammalia',bty='n',cex=1.5)#plot the amph
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$reptilia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.5)); axis(2); legend('topright','Reptilia',bty='n',cex=1.5)#plot the birds
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	mtext('Number of geographically unique occurrences at 10 arc-minute resolution',side=1,adj=0.5,outer=TRUE,line=1.5)	
+	mtext('Proportion of species',side=2,adj=0.5,outer=TRUE,line=1.5)
+dev.off()
+###work on summarizing area
+tbreaks = c(0,0.25,0.5,1,2.5,5,10,15,20,25,35); tlabels = c('>0.25','0.25-0.5','0.5-1','1-2.5','2.5-5','5-10','10-15','15-20','20-25','<25') #define the breaks and labels
+tt2 = as.character(cut(output$area_km2/1000000,breaks=tbreaks,labels=tlabels)) #cut the data and relabel it 
+tt3 = aggregate(tt2,by=list(taxa=output$taxa,bins=tt2),length)#get the counts
+out = data.frame(bins=tlabels,stringsAsFactors=FALSE) #define a new output data frame
+for(taxa in unique(tt3$taxa)) { #cycle through each of the taxa
+	out[taxa] = 0 #set eveything in column to 0
+	for (ii in 1:nrow(out)) { #cycle through each of the bins and extract the count information
+		tval = which(tt3$taxa==taxa & tt3$bins==out$bins[ii])
+		if (length(tval)>0) { out[ii,taxa] = tt3$x[tval] }
+	}
+}
+out$animals = rowSums(out[,c('amphibia','aves','mammalia','reptilia')]) #get the animal column
+out.prop = out; for (ii in 2:ncol(out.prop)) out.prop[,ii] = out.prop[,ii] / sum(out.prop[,ii]) #convert to proportions
+pdf('histogram_area.pdf',width=3.5*2,height=3.5*3,pointsize=12) #create the plot
+	par(mar=c(4,2,1,0.6),mfrow=c(3,2),oma=c(3,3,0,0))
+	bp = barplot(out.prop$plantae,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Plantae',bty='n',cex=1.5)#plot the plants
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$animal,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Animalia',bty='n',cex=1.5)#plot the animals
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$amphibia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Amphibia',bty='n',cex=1.5)#plot the amph
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$aves,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Aves',bty='n',cex=1.5)#plot the birds
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$mammalia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Mammalia',bty='n',cex=1.5)#plot the amph
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	bp = barplot(out.prop$reptilia,axes=FALSE,axisnames=FALSE,ylim=c(0,0.4)); axis(2); legend('topright','Reptilia',bty='n',cex=1.5)#plot the birds
+	text(bp, par('usr')[3], labels=out.prop$bins, srt=45, adj=c(1.1,1.1), xpd=TRUE)
+	mtext('Area of distribution predicted for current (millions square km)',side=1,adj=0.5,outer=TRUE,line=1.5)	
+	mtext('Proportion of species',side=2,adj=0.5,outer=TRUE,line=1.5)
+dev.off()
+
+
+
 
