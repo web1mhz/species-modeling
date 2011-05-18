@@ -53,6 +53,23 @@ summarize.ES.status = function(status,n) {
 	out = out[-which(out$ES=='current'),]#remove current
 	return(out)
 }
+summarize.ES.status.4.plot = function(status,n) {
+	cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
+	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
+	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
 
 
 #create species loss plots for all spp and images
@@ -117,6 +134,68 @@ sum.plot = function(tfile,tdata,status){
 		mtext(c('< 50% current','< 30% current','< 10% current','< 1% current'),side=2,line=0.5,outer=TRUE,at=c(0.125,0.375,0.625,0.875),adj=0.5)
 	dev.off()
 }
+sum.plot.4.plot = function(tfile,status){
+	#status = animal.ES.status.4.plot
+	#tfile = 'zzz.plot.pdf'
+	
+	#plot parameters
+	cols = c('#FF0000','#2E8B57','#0000FF') #define the line colors
+	cols.fill = paste(cols,'30',sep='') #define the polygon fill colors		
+	###create some summary stats for plotting
+	status$min = status$mean - status$sd; status$min[which(status$min<0)] = 0
+	status$max = status$mean + status$sd
+	
+	pdf(tfile,width=7.2,height=7.2*0.7,pointsize=12)
+		layout(matrix(c(rep(1,15),2,3),nr=1,byrow=TRUE))
+		par(mar=c(5,5,1,2),cex.lab=1.2)	
+		###first plot the optimistic
+		tout = status[which(status$dispersal=='opt.disp'),] #get just the optimistic dispersal
+		plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='Prop of species with <30% of distribution remaining',xlab='year',type='n',axes=F,ylim=c(0,max(status$max,na.rm=TRUE))) #create an empty plot
+		box(); axis(2,at=seq(0,1,0.05),tck=0.01,las=2);axis(4,at=seq(0,1,0.05),labels=NA,tck=0.01); axis(1,at=seq(2020,2080,10),labels=c(2020,NA,NA,2050,NA,NA,2080)) #add axes labels
+		#add the polygons
+		pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
+		pos = grep('30',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[2],border=NA)
+		pos = grep('16',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[3],border=NA)
+		#add the lines
+		for (ES in ESs) {
+			if (ES=='SRES') { ii=1 } else if (length(grep('30',ES))>0) { ii=2 } else { ii=3 }
+			pos = which(tout$ES==ES); points(tout$year[pos],tout$mean[pos],type='o',pch=19,col=cols[ii])
+		}
+		legend('topleft',legend=c('SRES','Avoid 2030','Avoid 2016'),col=cols,pch=19,bty='n',cex=1.2)
+		### plot the realistic
+		par(mar=c(5,0.2,1,0),xpd=TRUE)
+		tout = status[which(status$dispersal=='real.disp'),] #get just the optimistic dispersal
+		plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='',xlab='',type='n',axes=F,xlim=c(2077,2081),ylim=c(0,max(status$max,na.rm=TRUE))) #create an empty plot
+		#axis(1,at=seq(2020,2080,10),labels=c(2020,NA,NA,2050,NA,NA,2080)) #add axes labels
+		#add the polygons
+		pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
+		pos = grep('30',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[2],border=NA)
+		pos = grep('16',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[3],border=NA)
+		#add the lines
+		for (ES in ESs) {
+			if (ES=='SRES') { ii=1 } else if (length(grep('30',ES))>0) { ii=2 } else { ii=3 }
+			pos = which(tout$ES==ES); points(tout$year[pos],tout$mean[pos],type='o',pch=19,col=cols[ii])
+		};	text(2078,0,'Realistic dispersal',srt=90,adj=c(0,0),cex=1.3)
+		### plot the no dispersal
+		tout = status[which(status$dispersal=='no.disp'),] #get just the optimistic dispersal
+		plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='',xlab='',type='n',axes=F,xlim=c(2077,2081),ylim=c(0,max(status$max,na.rm=TRUE))) #create an empty plot
+		#add the polygons
+		pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
+		pos = grep('30',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[2],border=NA)
+		pos = grep('16',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+		polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[3],border=NA)
+		#add the lines
+		for (ES in ESs) {
+			if (ES=='SRES') { ii=1 } else if (length(grep('30',ES))>0) { ii=2 } else { ii=3 }
+			pos = which(tout$ES==ES); points(tout$year[pos],tout$mean[pos],type='o',pch=19,col=cols[ii])
+		};	text(2078,0,'No dispersal',srt=90,adj=c(0,0),cex=1.3)		
+	dev.off()
+}
 
 ####################################################################################################
 #read in the data
@@ -144,12 +223,13 @@ plant = read.csv(paste(data.dir,'plantae/predicted.area.csv.gz',sep=''),as.is=TR
 plant.ES.GCM = summarize.ES.GCM(plant); write.csv(plant.ES.GCM,'plantae.ES.GCM.csv',row.names=FALSE)
 plant.status = summarize.status.counts(plant); write.csv(plant.status,'plantae.status.counts.csv',row.names=FALSE)
 plant.ES.status = summarize.ES.status(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status,'plantae.ES.status.csv',row.names=FALSE)
+plant.ES.status.4.plot = summarize.ES.status.4.plot(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status.4.plot,'plantae.ES.status.4.plot.csv',row.names=FALSE)
 
 animal = rbind(amph, aves, mamm, rept)
 animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM.csv',row.names=FALSE)
 animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
 animal.ES.status = summarize.ES.status(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
-
+animal.ES.status.4.plot = summarize.ES.status.4.plot(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status.4.plot,'animal.ES.status.4.plot.csv',row.names=FALSE)
 
 #define some variables
 years=c(2020,2050,2080)
@@ -163,6 +243,11 @@ sum.plot('mammalia.summary.pdf',mamm,mamm.status)
 sum.plot('reptilia.summary.pdf',rept,rept.status)
 sum.plot('plantae.summary.pdf',plant,plant.status)
 sum.plot('animal.summary.pdf',animal,animal.status)
+
+sum.plot.4.plot('zzz.animal.pdf',animal.ES.status.4.plot)
+sum.plot.4.plot('zzz.plantae.pdf',plant.ES.status.4.plot)
+	#status = animal.ES.status.4.plot
+	#tfile = 'zzz.plot.pdf'
 
 ################################################################################
 ################################################################################
