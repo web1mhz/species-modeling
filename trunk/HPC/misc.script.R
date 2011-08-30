@@ -113,3 +113,34 @@ for (coi in cois) {
 	if (is.null(out2)) { out2 = tt } else { out2 = merge(out2,tt,all=TRUE) } #create or merge data as necessary
 }
 
+##########################################################################
+##########################################################################
+#summarize the maxent results files for percent contributions...
+
+out=NULL #define the basic output file
+for (taxa in list.files(wd,full.names=TRUE)) { #cycle through each of the taxa
+	t.taxa = basename(taxa); cat(t.taxa,'\n')
+	for (fam in list.files(taxa,full.names=TRUE)) { #cycle through each of the families
+		t.fam = basename(fam); cat('    ',t.fam)
+		tout = NULL; #define a temp output object
+		for (spp in list.files(fam,full.names=TRUE)) { cat('.')
+			t.spp = basename(spp); t.spp = gsub('.maxentResults.csv','',t.spp)
+			if (file.info(spp)$size>0) {
+				tt = read.csv(spp,as.is=TRUE) #read in the data
+				tout = rbind(tout,data.frame(taxa=t.taxa,fam=t.fam,spp=t.spp,
+				bio_1.contribution=tt$bio_1.contribution,
+				bio_4.contribution=tt$bio_4.contribution,
+				bio_5.contribution=ifelse(is.null(tt$bio_5.contribution),NA,tt$bio_5.contribution),
+				bio_6.contribution=ifelse(is.null(tt$bio_6.contribution),NA,tt$bio_6.contribution),
+				bio_12.contribution=tt$bio_12.contribution,
+				bio_15.contribution=tt$bio_15.contribution,
+				bio_16.contribution=ifelse(is.null(tt$bio_16.contribution),NA,tt$bio_16.contribution),
+				bio_17.contribution=ifelse(is.null(tt$bio_17.contribution),NA,tt$bio_17.contribution))) #append the infomation
+			}
+		}
+		out = rbind(out,tout) #append the data
+		cat('\n')
+	}
+}
+
+write.csv(out,'/home/uqvdwj/WallaceInitiative/summaries/variable.contributions.csv',row.names=FALSE) #write out the data
