@@ -17,7 +17,6 @@ summarize.ES.GCM = function(tdata){
 	out.sd = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),sd);names(out.sd)[4:6] = paste(names(out.sd)[4:6],'.sd',sep='')
 	return(merge(out.mean,out.sd,all=TRUE))
 }
-
 summarize.status.counts = function(tdata) {
 	cois = grep('prop',names(tdata))#coliumns of interest
 	ex = function(x) { return(length(x[x<0.01])) }
@@ -35,11 +34,14 @@ summarize.status.counts = function(tdata) {
 	vu = function(x) { return(length(x[x<0.5])) }
 	out.vu = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),vu)
 	names(out.vu)[4:6] = paste(gsub('prop.','',names(out.vu)[4:6]),'.vu',sep='')
-
-	out = merge(out.ex,out.cr,all=TRUE); out = merge(out,out.en,all=TRUE); out = merge(out,out.vu,all=TRUE)
+	
+	ben = function(x) { return(length(x[x>1])) }
+	out.ben = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),ben)
+	names(out.ben)[4:6] = paste(gsub('prop.','',names(out.ben)[4:6]),'.gain',sep='')
+	
+	out = merge(out.ex,out.cr,all=TRUE); out = merge(out,out.en,all=TRUE); out = merge(out,out.vu,all=TRUE); out = merge(out,out.ben,all=TRUE)
 	return(out)
 }
-
 summarize.ES.status = function(status,n) {
 	cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status)),grep('vu',names(status))) #define the columns of interst
 	status[,cois] = status[,cois] / n #make these proportions
@@ -60,6 +62,91 @@ summarize.ES.status.4.plot = function(status,n) {
 	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
 	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
 	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.50 = function(status,n) {
+	cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status)),grep('vu',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
+	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
+	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.30 = function(status,n) {
+	cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
+	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
+	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.10 = function(status,n) {
+	cois = c(grep('ex',names(status)),grep('cr',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
+	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
+	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.1 = function(status,n) {
+	cois = c(grep('ex',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = status[,grep('no.disp',colnames(status))] #get the no.dispersal info
+	status$real.disp = status[,grep('real.disp',colnames(status))] #get the realized dispersal info
+	status$opt.disp = status[,grep('opt.disp',colnames(status))] #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.ben = function(status,n) {
+	cois = c(grep('gain',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = status[,grep('no.disp',colnames(status))] #get the no.dispersal info
+	status$real.disp = status[,grep('real.disp',colnames(status))] #get the realized dispersal info
+	status$opt.disp = status[,grep('opt.disp',colnames(status))] #get the optimistic dispersal info
 	status = status[,-c(cois)] #keep only the data of interest
 	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
 	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
@@ -230,6 +317,23 @@ animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM
 animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
 animal.ES.status = summarize.ES.status(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
 animal.ES.status.4.plot = summarize.ES.status.4.plot(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status.4.plot,'animal.ES.status.4.plot.csv',row.names=FALSE)
+
+ES.status = data.frame(taxa='animal', level='>50% loss',summarize.ES.50(animal.status, length(unique(animal$spp))));
+ES.status = rbind(ES.status, data.frame(taxa='animal', level='>70% loss',summarize.ES.30(animal.status, length(unique(animal$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='animal', level='>90% loss',summarize.ES.10(animal.status, length(unique(animal$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='animal', level='>99% loss',summarize.ES.1(animal.status, length(unique(animal$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='animal', level='gain',summarize.ES.ben(animal.status, length(unique(animal$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='>50% loss',summarize.ES.50(plant.status, length(unique(plant$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='>70% loss',summarize.ES.30(plant.status, length(unique(plant$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='>90% loss',summarize.ES.10(plant.status, length(unique(plant$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='>99% loss',summarize.ES.1(plant.status, length(unique(plant$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='gain',summarize.ES.ben(plant.status, length(unique(plant$spp)))))
+write.csv(ES.status,'ES.status.4.table.csv',row.names=FALSE)
+
+
+
+
+
 
 #define some variables
 years=c(2020,2050,2080)
