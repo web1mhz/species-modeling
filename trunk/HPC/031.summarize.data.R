@@ -39,7 +39,11 @@ summarize.status.counts = function(tdata) {
 	out.ben = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),ben)
 	names(out.ben)[4:6] = paste(gsub('prop.','',names(out.ben)[4:6]),'.gain',sep='')
 	
-	out = merge(out.ex,out.cr,all=TRUE); out = merge(out,out.en,all=TRUE); out = merge(out,out.vu,all=TRUE); out = merge(out,out.ben,all=TRUE)
+	ben15 = function(x) { return(length(x[x>1.5])) }
+	out.ben15 = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),ben15)
+	names(out.ben15)[4:6] = paste(gsub('prop.','',names(out.ben15)[4:6]),'.gain15',sep='')
+	
+	out = merge(out.ex,out.cr,all=TRUE); out = merge(out,out.en,all=TRUE); out = merge(out,out.vu,all=TRUE); out = merge(out,out.ben,all=TRUE); out = merge(out,out.ben15,all=TRUE)
 	return(out)
 }
 summarize.ES.status = function(status,n) {
@@ -317,6 +321,11 @@ animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM
 animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
 animal.ES.status = summarize.ES.status(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
 animal.ES.status.4.plot = summarize.ES.status.4.plot(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status.4.plot,'animal.ES.status.4.plot.csv',row.names=FALSE)
+
+animal.status = summarize.status.counts(animal)
+plant.status = summarize.status.counts(plant)
+
+
 
 ES.status = data.frame(taxa='animal', level='>50% loss',summarize.ES.50(animal.status, length(unique(animal$spp))));
 ES.status = rbind(ES.status, data.frame(taxa='animal', level='>70% loss',summarize.ES.30(animal.status, length(unique(animal$spp)))))
