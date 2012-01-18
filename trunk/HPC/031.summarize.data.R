@@ -23,19 +23,19 @@ summarize.status.counts = function(tdata) {
 	out.ex = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),ex)
 	names(out.ex)[4:6] = paste(gsub('prop.','',names(out.ex)[4:6]),'.ex',sep='')
 
-	en = function(x) { return(length(x[x<0.3])) }
+	en = function(x) { return(length(x[x<0.3 & x>=0.1])) }
 	out.en = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),en)
 	names(out.en)[4:6] = paste(gsub('prop.','',names(out.en)[4:6]),'.en',sep='')
 
-	cr = function(x) { return(length(x[x<0.1])) }
+	cr = function(x) { return(length(x[x<0.1 & x>=0.01])) }
 	out.cr = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),cr)
 	names(out.cr)[4:6] = paste(gsub('prop.','',names(out.cr)[4:6]),'.cr',sep='')
 
-	vu = function(x) { return(length(x[x<0.5])) }
+	vu = function(x) { return(length(x[x<0.5 & x>=0.3])) }
 	out.vu = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),vu)
 	names(out.vu)[4:6] = paste(gsub('prop.','',names(out.vu)[4:6]),'.vu',sep='')
 	
-	ben = function(x) { return(length(x[x>1])) }
+	ben = function(x) { return(length(x[x>=1 & x<1.5])) }
 	out.ben = aggregate(tdata[cois],list(ES=tdata$ES,GCM=tdata$GCM,year=tdata$year),ben)
 	names(out.ben)[4:6] = paste(gsub('prop.','',names(out.ben)[4:6]),'.gain',sep='')
 	
@@ -148,6 +148,23 @@ summarize.ES.ben = function(status,n) {
 	cois = c(grep('gain',names(status))) #define the columns of interst
 	status[,cois] = status[,cois] / n #make these proportions
 	status = status[,c(1:3,cois)] #keep only the data of interest
+	status$no.disp = rowSums(status[,grep('no.disp',colnames(status))]) #get the no.dispersal info
+	status$real.disp = rowSums(status[,grep('real.disp',colnames(status))]) #get the realized dispersal info
+	status$opt.disp = rowSums(status[,grep('opt.disp',colnames(status))]) #get the optimistic dispersal info
+	status = status[,-c(cois)] #keep only the data of interest
+	status.mean = aggregate(status[,4:6],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,4:6],list(ES=status$ES,year=status$year),sd)	
+	out = NULL #setup the basic output
+	for (tvar in names(status.mean[-c(1:2)])) {
+		out = rbind(out,data.frame(status.mean[1:2],dispersal=tvar,mean=status.mean[,tvar],sd=status.sd[,tvar]))
+	}
+	out = out[-which(out$ES=='current'),]#remove current
+	return(out)
+}
+summarize.ES.ben15 = function(status,n) {
+	cois = c(grep('gain15',names(status))) #define the columns of interst
+	status[,cois] = status[,cois] / n #make these proportions
+	status = status[,c(1:3,cois)] #keep only the data of interest
 	status$no.disp = status[,grep('no.disp',colnames(status))] #get the no.dispersal info
 	status$real.disp = status[,grep('real.disp',colnames(status))] #get the realized dispersal info
 	status$opt.disp = status[,grep('opt.disp',colnames(status))] #get the optimistic dispersal info
@@ -173,6 +190,17 @@ sum.plot = function(tfile,tdata,status){
 		n = length(unique(tdata$spp)) #define the data
 		cois = c(grep('ex',names(status)),grep('cr',names(status)),grep('en',names(status)),grep('vu',names(status)))
 		status[,cois] = status[,cois]/n #make this proportionate
+		##make values cumlative
+		status$cur.no.disp.cr = status$cur.no.disp.cr + status$cur.no.disp.ex
+		status$cur.no.disp.en = status$cur.no.disp.en + status$cur.no.disp.cr
+		status$cur.no.disp.vu = status$cur.no.disp.vu + status$cur.no.disp.en
+		status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+		status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+		status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+		status$cur.opt.disp.cr = status$cur.opt.disp.cr + status$cur.opt.disp.ex
+		status$cur.opt.disp.en = status$cur.opt.disp.en + status$cur.opt.disp.cr
+		status$cur.opt.disp.vu = status$cur.opt.disp.vu + status$cur.opt.disp.en
+		##continue
 		cols = c('#FF0000','#2E8B57','#0000FF') #define the line colors
 		cols.fill = paste(cols,'30',sep='') #define the polygon fill colors
 		#create some summary stats for plotting
@@ -289,7 +317,7 @@ sum.plot.4.plot = function(tfile,status){
 }
 
 ####################################################################################################
-#read in the data
+#read in the data and extract simple aggregates...
 amph = read.csv(paste(data.dir,'amphibia/predicted.area.csv.gz',sep=''),as.is=TRUE)
 amph.ES.GCM = summarize.ES.GCM(amph); write.csv(amph.ES.GCM,'amphibia.ES.GCM.csv',row.names=FALSE)
 amph.status = summarize.status.counts(amph); write.csv(amph.status,'amphibia.status.counts.csv',row.names=FALSE)
@@ -314,35 +342,46 @@ plant = read.csv(paste(data.dir,'plantae/predicted.area.csv.gz',sep=''),as.is=TR
 plant.ES.GCM = summarize.ES.GCM(plant); write.csv(plant.ES.GCM,'plantae.ES.GCM.csv',row.names=FALSE)
 plant.status = summarize.status.counts(plant); write.csv(plant.status,'plantae.status.counts.csv',row.names=FALSE)
 plant.ES.status = summarize.ES.status(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status,'plantae.ES.status.csv',row.names=FALSE)
-plant.ES.status.4.plot = summarize.ES.status.4.plot(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status.4.plot,'plantae.ES.status.4.plot.csv',row.names=FALSE)
 
 animal = rbind(amph, aves, mamm, rept)
 animal.ES.GCM = summarize.ES.GCM(animal); write.csv(animal.ES.GCM,'animal.ES.GCM.csv',row.names=FALSE)
 animal.status = summarize.status.counts(animal); write.csv(animal.status,'animal.status.counts.csv',row.names=FALSE)
 animal.ES.status = summarize.ES.status(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status,'animal.ES.status.csv',row.names=FALSE)
-animal.ES.status.4.plot = summarize.ES.status.4.plot(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status.4.plot,'animal.ES.status.4.plot.csv',row.names=FALSE)
 
-animal.status = summarize.status.counts(animal)
-plant.status = summarize.status.counts(plant)
+allspp = rbind(animal,plant)
+allspp.status = summarize.status.counts(allspp)
 
-
-
+###now get some more complicated summaries... and plots
 ES.status = data.frame(taxa='animal', level='>50% loss',summarize.ES.50(animal.status, length(unique(animal$spp))));
 ES.status = rbind(ES.status, data.frame(taxa='animal', level='>70% loss',summarize.ES.30(animal.status, length(unique(animal$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='animal', level='>90% loss',summarize.ES.10(animal.status, length(unique(animal$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='animal', level='>99% loss',summarize.ES.1(animal.status, length(unique(animal$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='animal', level='gain',summarize.ES.ben(animal.status, length(unique(animal$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='animal', level='gain >50%',summarize.ES.ben15(animal.status, length(unique(animal$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='plant', level='>50% loss',summarize.ES.50(plant.status, length(unique(plant$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='plant', level='>70% loss',summarize.ES.30(plant.status, length(unique(plant$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='plant', level='>90% loss',summarize.ES.10(plant.status, length(unique(plant$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='plant', level='>99% loss',summarize.ES.1(plant.status, length(unique(plant$spp)))))
 ES.status = rbind(ES.status, data.frame(taxa='plant', level='gain',summarize.ES.ben(plant.status, length(unique(plant$spp)))))
+ES.status = rbind(ES.status, data.frame(taxa='plant', level='gain >50%',summarize.ES.ben15(plant.status, length(unique(plant$spp)))))
+ES.status$dispersal = gsub('cur.','',ES.status$dispersal);ES.status$dispersal = gsub('.gain','',ES.status$dispersal); ES.status$dispersal = gsub('15','',ES.status$dispersal);
 write.csv(ES.status,'ES.status.4.table.csv',row.names=FALSE)
 
-
-
-
-
+#create supplemental tables
+SI.table.fun = function(SI.table) {
+	SI.table[,'mean (sd)'] = paste(format(round(SI.table$mean,3),nsmall=3),' (',format(round(SI.table$sd,4),nsmall=4),')',sep='')
+	SI.table = SI.table[,-which(names(SI.table)%in%c('dispersal','mean','sd'))]
+	tout=unique(SI.table[,-which(names(SI.table)%in%c('ES','mean (sd)'))])
+	for (tvar in unique(SI.table$ES)) {
+		tt = SI.table[which(SI.table$ES==tvar),c(1,2,4,5)]
+		names(tt)[4] = tvar
+		tout = merge(tout,tt)
+	}
+	return(tout)
+}
+SI.table.no.disp = SI.table.fun(ES.status[grep('no.disp',ES.status$dispersal),]); write.csv(SI.table.no.disp,'SI.table.no.disp.csv',row.names=FALSE)
+SI.table.real.disp = SI.table.fun(ES.status[grep('real.disp',ES.status$dispersal),]); write.csv(SI.table.real.disp,'SI.table.real.disp.csv',row.names=FALSE)
+SI.table.opt.disp = SI.table.fun(ES.status[grep('opt.disp',ES.status$dispersal),]); write.csv(SI.table.opt.disp,'SI.table.opt.disp.csv',row.names=FALSE)
 
 #define some variables
 years=c(2020,2050,2080)
@@ -350,12 +389,203 @@ GCMs=unique(amph$GCM); GCMs = GCMs[-which(GCMs=='current')]
 ESs=unique(amph$ES); ESs = ESs[-which(ESs=='current')]
 
 #create the summary plots
-sum.plot('amphibia.summary.pdf',amph,amph.status)
-sum.plot('aves.summary.pdf',aves,aves.status)
-sum.plot('mammalia.summary.pdf',mamm,mamm.status)
-sum.plot('reptilia.summary.pdf',rept,rept.status)
-sum.plot('plantae.summary.pdf',plant,plant.status)
-sum.plot('animal.summary.pdf',animal,animal.status)
+sum.plot('SI.amphibia.summary.plot.pdf',amph,amph.status)
+sum.plot('SI.aves.summary.plot.pdf',aves,aves.status)
+sum.plot('SI.mammalia.summary.plot.pdf',mamm,mamm.status)
+sum.plot('SI.reptilia.summary.plot.pdf',rept,rept.status)
+sum.plot('SI.plantae.summary.plot.pdf',plant,plant.status)
+sum.plot('SI.animal.summary.plot.pdf',animal,animal.status)
+
+###create figure 2 plot
+cols = c('#FF0000','#2E8B57','#0000FF') #define the line colors
+cols.fill = paste(cols,'30',sep='') #define the polygon fill colors
+tplot = function(tdata,title,ylim,tlegend=FALSE,xlabs='year') {
+	#start plotting
+	tout = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),mean); names(tout)[3] = 'mean'
+	tout$sd = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),sd)[,3]
+	tout$min = tout$mean-tout$sd; tout$min[which(tout$min<0)] = 0
+	tout$max = tout$mean+tout$sd
+	#create the basic plot
+	plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='proportion of species',xlab=xlabs,type='n',axes=F,main=title,ylim=ylim)
+	axis(2); axis(1,at=seq(2020,2080,10),labels=c(2020,NA,NA,2050,NA,NA,2080))
+	#add the polygons
+	pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
+	pos = grep('30',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+	polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[2],border=NA)
+	pos = grep('16',tout$ES); tt = tout[pos,]; tt.min = aggregate(tt$min,by=list(year=tt$year),min); tt.max = aggregate(tt$max,by=list(year=tt$year),max)
+	polygon(c(tt.min$year,tt.max$year[3:1]),c(tt.min$x,tt.max$x[3:1]),col=cols.fill[3],border=NA)
+	#add the lines
+	for (ES in ESs) {
+		if (ES=='SRES') { ii=1 } else if (length(grep('30',ES))>0) { ii=2 } else { ii=3 }
+		pos = which(tout$ES==ES); points(tout$year[pos],tout$mean[pos],type='o',pch=19,col=cols[ii])
+	}
+	if (tlegend) legend('topleft',legend=c('SRES','Avoid 2030','Avoid 2016'),col=cols,pch=19,bty='n')
+}
+	
+pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
+	layout(matrix(c(1,1,2,3,1,1,4,5,1,1,6,7),nr=3,byrow=TRUE))
+	par(mar=c(4,4,1,1))
+	
+	###first plot is all species
+	status = allspp.status; tdata = allspp;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	ylims = ylim=c(0,max(as.vector(status.max[,grep('vu',names(status.max))]),na.rm=TRUE))
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=TRUE)
+
+	### plot is plants
+	status = plant.status; tdata = plant;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
+	legend('topleft',legend='Plant',bty='n')
+
+	### plot is animal
+	status = animal.status; tdata = animal;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
+	legend('topleft',legend='Animal',bty='n')	
+
+	### plot is plants
+	status = amph.status; tdata = amph;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
+	legend('topleft',legend='Amphibia',bty='n')
+
+	### plot is plants
+	status = aves.status; tdata = aves;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
+	legend('topleft',legend='Aves',bty='n')	
+	
+	### plot is plants
+	status = mamm.status; tdata = mamm;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE)
+	legend('topleft',legend='Mammalia',bty='n')
+	
+	### plot is plants
+	status = rept.status; tdata = rept;
+	n = length(unique(tdata$spp)) #define the data
+	cois = c(grep('vu',names(status)))
+	##make values cumlative
+	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
+	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
+	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
+	##continue
+	status[,cois] = status[,cois]/n #make this proportionate
+	#create some summary stats for plotting
+	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
+	status.sd = aggregate(status[,cois],list(ES=status$ES,year=status$year),sd)
+	status.min = status.max = status.mean
+	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
+	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE)
+	legend('topleft',legend='Reptilia',bty='n')
+dev.off()
+		
+
+		
+		tplot(status[,c('ES','GCM','year','cur.no.disp.ex')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('ex',names(status.max))]),na.rm=TRUE)),tlegend=TRUE)
+		tplot(status[,c('ES','GCM','year','cur.real.disp.ex')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('ex',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.opt.disp.ex')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('ex',names(status.max))]),na.rm=TRUE)))
+		
+		tplot(status[,c('ES','GCM','year','cur.no.disp.cr')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('cr',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.real.disp.cr')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('cr',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.opt.disp.cr')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('cr',names(status.max))]),na.rm=TRUE)))
+		
+		tplot(status[,c('ES','GCM','year','cur.no.disp.en')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('en',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.real.disp.en')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('en',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.opt.disp.en')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('en',names(status.max))]),na.rm=TRUE)))
+		
+		tplot(status[,c('ES','GCM','year','cur.no.disp.vu')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('vu',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('vu',names(status.max))]),na.rm=TRUE)))
+		tplot(status[,c('ES','GCM','year','cur.opt.disp.vu')],title=' ',ylim=c(0,max(as.vector(status.max[,grep('vu',names(status.max))]),na.rm=TRUE)))
+		
+		mtext(c('no dispersal','Realistic','Optimistic'),side=3,line=0,outer=TRUE,at=c(0.165,0.5,0.825),adj=0.5)
+		mtext(c('< 50% current','< 30% current','< 10% current','< 1% current'),side=2,line=0.5,outer=TRUE,at=c(0.125,0.375,0.625,0.875),adj=0.5)
+	dev.off()
+
+
+###others
+plant.ES.status.4.plot = summarize.ES.status.4.plot(plant.status, length(unique(plant$spp))); write.csv(plant.ES.status.4.plot,'plantae.ES.status.4.plot.csv',row.names=FALSE)
+animal.ES.status.4.plot = summarize.ES.status.4.plot(animal.status, length(unique(animal$spp))); write.csv(animal.ES.status.4.plot,'animal.ES.status.4.plot.csv',row.names=FALSE)
 
 sum.plot.4.plot('zzz.animal.pdf',animal.ES.status.4.plot)
 sum.plot.4.plot('zzz.plantae.pdf',plant.ES.status.4.plot)
