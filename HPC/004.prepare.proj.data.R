@@ -1,10 +1,10 @@
 #define & set the working directory
-work.dir = '/homes/31/jc165798/working/Wallace.Initiative/'; setwd(work.dir)
+work.dir = '/home/jc165798/working/Wallace.Initiative/'; setwd(work.dir)
 
 #define some directories
-in.dir = '/homes/31/jc165798/working/Wallace.Initiative/raw.files.20100417/'
-tmp.dir = '/homes/31/jc165798/working/Wallace.Initiative/tmp/'
-out.dir = '/homes/31/jc165798/working/Wallace.Initiative/projecting.data/'
+in.dir = '/home/jc165798/working/Wallace.Initiative/raw.files.20100417/'
+tmp.dir = '/home/jc165798/working/Wallace.Initiative/tmp/'
+out.dir = '/home/jc165798/working/Wallace.Initiative/projecting.data/'
 
 #define the location of the occur files and list the files
 infiles = list.files(in.dir,pattern='\\.asc',recursive=T,full.names=T); infiles = gsub('//','/',infiles)

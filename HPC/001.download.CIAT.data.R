@@ -15,7 +15,7 @@ urlfiles = c('ftp://gisweb.ciat.cgiar.org/Agroecosystems/jramirez/WallaceInitiat
 localfiles = c('amphibia.zip','aves.zip','mammalia.zip','plantae.zip','reptilia.zip','20C3M.zip','A1B_A16r2h.zip','A1B_A16r4l.zip','A1B_A16r5l.zip','A1B_A30r2h.zip','A1B_A30r5l.zip','SRES_A1B.zip','WorldClim_BioClim_5min.zip')
 
 #set the working directory
-work.dir = '/homes/31/jc165798/working/Wallace.Initiative/raw.files.20100417/'; setwd(work.dir)
+work.dir = '/homes/jc165798/working/Wallace.Initiative/raw.files.20100417/'; setwd(work.dir)
 
 #cycle through the dates
 for (ii in 1:length(localfiles)) { try(download.file(url=urlfiles[ii], destfile=localfiles[ii], method='auto')) }

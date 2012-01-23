@@ -8,10 +8,10 @@ for(i in 1:length(args)) {
 }
 #should have read in e.g.,...
 # spp=13800736 
-# work.dir="/home/uqvdwj/WallaceInitiative/models/amphibia/Ambystomatidae/13800736/"
-# maxent="/home/uqvdwj/WallaceInitiative/maxent.jar"
-# proj.dir="/home/uqvdwj/WallaceInitiative/projecting.data/"
-# mask.pos.file = '/home/uqvdwj/WallaceInitiative/training.data/mask.pos.csv' #define mask basic positions
+# work.dir="/home/jc165798/working/WallaceInitiative/models/amphibia/Ambystomatidae/13800736/"
+# maxent="/home/jc165798/working/WallaceInitiative/maxent.jar"
+# proj.dir="/home/jc165798/working/WallaceInitiative/projecting.data/"
+# mask.pos.file = '/home/jc165798/working/WallaceInitiative/training.data/mask.pos.csv' #define mask basic positions
 # models=TRUE
 # project=TRUE
 # summarize=TRUE
@@ -33,11 +33,11 @@ model.species = function() {
 	if (nrow(occur) >= 40) { #run the maxent model once with full data and another cross validated
 		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings replicates=10 noaskoverwrite novisible nooutputgrids autorun',sep=''))
 		system('cp -af output/maxentResults.csv output/maxentResults.crossvalide.csv')
-		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids autorun',sep=''))
+		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids jackknife writeplotdata autorun',sep=''))
 	} else {
 		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings replicates=10 noaskoverwrite novisible nooutputgrids autorun',sep=''))
 		system('cp -af output/maxentResults.csv output/maxentResults.crossvalide.csv')
-		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids autorun',sep=''))
+		system(paste('java -mx2000m -jar ',maxent,' outputdirectory=output samplesfile=occur.csv environmentallayers=bkgd.csv -N bio_5 -N bio_6 -N bio_16 -N bio_17 nowarnings noaskoverwrite responsecurves novisible writebackgroundpredictions nooutputgrids jackknife writeplotdata autorun',sep=''))
 	}
 }
 
@@ -46,7 +46,7 @@ project.species = function() {
 	if (!file.exists(paste('output/',spp,'.lambdas',sep=''))){ quit('no') } #stop if maxent fails
 	proj.list = list.files(proj.dir)
 	for (projx in proj.list) { cat(projx,'\n')
-		system(paste('java -cp ',maxent,' density.Project output/',spp,'.lambdas ',proj.dir,projx,' output/',projx,'.asc fadebyclamping nowriteclampgrid \n',sep=""))
+		system(paste('java -mx2000m -cp ',maxent,' density.Project output/',spp,'.lambdas ',proj.dir,projx,' output/',projx,'.asc fadebyclamping nowriteclampgrid \n',sep=""))
 	}
 	system('gzip output/*.asc') #compress the ascii grid files
 }
