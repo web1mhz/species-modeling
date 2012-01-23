@@ -1,11 +1,12 @@
 # grab interactive node to prepare background data using
-# qsub -I -l place=excl -l select=1:ncpus=8:NodeType=medium -A q1086
+# for UQ -- qsub -I -l place=excl -l select=1:ncpus=8:NodeType=medium -A q1086
 
 #setup the libraries
 library(SDMTools)
 
 #define & set the working directory
-work.dir = '/home/uqvdwj/WallaceInitiative/training.data/'; setwd(work.dir)
+#work.dir = '/home/uqvdwj/WallaceInitiative/training.data/'; setwd(work.dir)
+work.dir = '/home/jc165798/working/WallaceInitiative/training.data/'; setwd(work.dir)
 
 #read in the background file
 bkgd = read.asc.gz('ecozone001degree.asc.gz')

@@ -1,5 +1,5 @@
 # grab interactive node to prepare background data using
-# qsub -I -l place=excl -l select=1:ncpus=8:NodeType=medium -A q1086
+# for UQ -- qsub -I -l place=excl -l select=1:ncpus=8:NodeType=medium -A q1086
 
 #setup & load libraries needed for run
 library(SDMTools)
@@ -7,14 +7,14 @@ library(SDMTools)
 ################################################################################
 
 #define & set the working directory
-work.dir = '/home/uqvdwj/WallaceInitiative/'; setwd(work.dir)
+work.dir = '/home/jc165798/working/WallaceInitiative/'; setwd(work.dir)
 
 #define the location of the occur files and list the files
-in.dir = '/home/uqvdwj/WallaceInitiative/raw.files.20100417/unzipped/'
+in.dir = '/home/jc165798/working/WallaceInitiative/raw.files.20100417/unzipped/'
 infiles.occur = list.files(in.dir,pattern='\\.csv')
 
 #training data directory
-train.dir = '/home/uqvdwj/WallaceInitiative/training.data/occur/'
+train.dir = '/home/jc165798/working/WallaceInitiative/training.data/occur/'
 
 #define the environmental variables to be used in appending data
 enviro.dir = paste(work.dir,'training.data/current.0.1degree/',sep='')
@@ -64,17 +64,16 @@ infiles.occur = list.files(train.dir,pattern='occur.csv',recursive=TRUE); infile
 #cycle through each of the files and create the necessary R script
 for (infile in infiles.occur) {	cat(infile,'\n')
 	outfile = gsub('/','_',infile)
-	#create a temporary R script
-	zz = file(paste(tmp.pbs,outfile,'.R',sep=''),'w')
+	zz = file(paste(tmp.pbs,outfile,'.R',sep=''),'w') #create a temporary R script
 		cat("#load the libraries \n",file=zz)
 		cat("library(SDMTools) \n",file=zz)
 		cat('\n',file=zz)
 		cat("#read in the background file asc & individual domains \n",file=zz)
-		cat("bkgd = read.asc.gz('/home/uqvdwj/WallaceInitiative/training.data/ecozone001degree.asc.gz') \n",file=zz)
-		cat("for (ii in 1:8) assign(paste('bkgd.',ii,sep=''),read.csv(paste('/home/uqvdwj/WallaceInitiative/training.data/bkgd.domain.',ii,'.csv',sep=''))) \n",file=zz)
+		cat("bkgd = read.asc.gz('/home/jc165798/working/WallaceInitiative/training.data/ecozone001degree.asc.gz') \n",file=zz)
+		cat("for (ii in 1:8) assign(paste('bkgd.',ii,sep=''),read.csv(paste('/home/jc165798/working/WallaceInitiative/training.data/bkgd.domain.',ii,'.csv',sep=''))) \n",file=zz)
 		cat('\n',file=zz)
 		cat("#prepare the occurrences \n",file=zz)
-		cat('work.dir="/home/uqvdwj/WallaceInitiative/models/',infile,'/"; dir.create(work.dir,recursive=TRUE); setwd(work.dir) \n',sep='',file=zz)
+		cat('work.dir="/home/jc165798/working/WallaceInitiative/models/',infile,'/"; dir.create(work.dir,recursive=TRUE); setwd(work.dir) \n',sep='',file=zz)
 		cat('occur=read.csv("',train.dir,infile,'/occur.csv','",as.is=TRUE) \n',sep='',file=zz)
 		cat('species=unique(occur$specie_id) \n',sep='',file=zz)
 		cat('\n',file=zz)
@@ -86,29 +85,19 @@ for (infile in infiles.occur) {	cat(infile,'\n')
 		cat("    out.bkgd = NULL; for (ii in tbkgd) out.bkgd = rbind(out.bkgd,get(paste('bkgd.',ii,sep=''))) #grab the background data for the domains \n",file=zz)
 		cat("    write.csv(out.bkgd,paste(spp,'/bkgd.csv',sep=''),row.names=F) #write out the data \n",file=zz)
 		cat("    write.csv(out.occur,paste(spp,'/occur.csv',sep=''),row.names=F) #write out the data \n",file=zz)
-		cat("    system(paste('tar --remove-files -czf ',spp,'.tar.gz ',spp,' ',sep='')) #tar the data \n",file=zz)
 		cat("} \n",file=zz)
 		cat('\n',file=zz)			
-	#close the file
-	close(zz)
+	close(zz)#close the file
 }
 
 #cycle through and submit all the sh scripts created
 setwd(tmp.pbs)
 R.files = list.files(,pattern='\\.R')
-#create a datafile for R scripts to be run
-zz = file('occur.dat','w')
-	for (tfile in R.files) cat(tfile,'\n',sep='',file=zz)
-close(zz)
-#create a pbs to submit an job array
-zz = file('occur.pbs','w')
-	cat('#!/bin/bash \n',file=zz)
-	cat('(sleep $(( ($PBS_ARRAY_INDEX % 10) * 5 )))\n',file=zz)
-	cat('module load R \n',file=zz)
-	cat('cd ',tmp.pbs,' \n',sep='',file=zz)
-	cat('infile=$(sed -n $[PBS_ARRAY_INDEX]p occur.dat)\n',file=zz)
-	cat('outfile=${infile}out\n',file=zz)
-	cat('R CMD BATCH --no-save ${infile} ${outfile}\n',sep='',file=zz)
-close(zz)
-#submit the pbs job array
-system(paste('qsub -A q1086 -J 1-',length(R.files),' occur.pbs',sep=''))
+for (R.file in R.files) { #cycle through each of the files... create sh file and start the jobs
+	zz = file(gsub('.R','.sh',R.file),'w') #start the file
+		cat('#!/bin/bash\n',file=zz)
+		cat('cd $PBS_O_WORKDIR\n',file=zz)
+		cat('R CMD BATCH --no-save --no-restore ',R.file,'\n',sep='',file=zz)
+	close(zz)#close the file
+	system(paste('qsub -m n -l nodes=1:ppn=2 -l pmem=6gb ',gsub('.R','.sh',R.file),sep=''))
+}
