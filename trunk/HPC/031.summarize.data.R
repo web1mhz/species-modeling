@@ -4,8 +4,10 @@
 ################################################################################
 ################################################################################
 #define the directories
-work.dir = '/home/uqvdwj/WallaceInitiative/ms/avoid.ms/'; dir.create(work.dir,recursive=TRUE); setwd(work.dir)
-data.dir = '/home/uqvdwj/WallaceInitiative/summaries/area/taxa/'
+work.dir = '~/tmp/avoid.ms/'; dir.create(work.dir,recursive=TRUE); setwd(work.dir)
+data.dir = '~/tmp/summaries/area/taxa/'
+# work.dir = '/home/uqvdwj/WallaceInitiative/ms/avoid.ms/'; dir.create(work.dir,recursive=TRUE); setwd(work.dir)
+# data.dir = '/home/uqvdwj/WallaceInitiative/summaries/area/taxa/'
 
 ###################################################################################################
 #define some common functions
@@ -182,8 +184,10 @@ summarize.ES.ben15 = function(status,n) {
 
 #create species loss plots for all spp and images
 sum.plot = function(tfile,tdata,status){
-	
-	pdf(tfile,width=7.2,height=9.6,pointsize=8)
+	png(gsub('pdf','png',tfile),width=7.2,height=9.6,units='cm',pointsize=5,res=600)
+
+
+	#pdf(tfile,width=7.2,height=9.6,pointsize=8)
 		par(oma=c(1,3,3,0))
 		layout(matrix(1:12,nr=4,byrow=TRUE))
 		par(mar=c(4,4,1,1))
@@ -399,14 +403,14 @@ sum.plot('SI.animal.summary.plot.pdf',animal,animal.status)
 ###create figure 2 plot
 cols = c('#FF0000','#2E8B57','#0000FF') #define the line colors
 cols.fill = paste(cols,'30',sep='') #define the polygon fill colors
-tplot = function(tdata,title,ylim,tlegend=FALSE,xlabs='year') {
+tplot = function(tdata,title,ylim,tlegend=FALSE,xlabs='Year',ylabs='Proportion of species') {
 	#start plotting
 	tout = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),mean); names(tout)[3] = 'mean'
 	tout$sd = aggregate(tdata[,4],list(ES=tdata$ES,year=tdata$year),sd)[,3]
 	tout$min = tout$mean-tout$sd; tout$min[which(tout$min<0)] = 0
 	tout$max = tout$mean+tout$sd
 	#create the basic plot
-	plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab='proportion of species',xlab=xlabs,type='n',axes=F,main=title,ylim=ylim)
+	plot(c(2020,2080),c(0,max(tout$max,na.rm=T)),ylab=ylabs,xlab=xlabs,type='n',axes=F,main=title,ylim=ylim)
 	axis(2); axis(1,at=seq(2020,2080,10),labels=c(2020,NA,NA,2050,NA,NA,2080))
 	#add the polygons
 	pos = which(tout$ES=='SRES'); polygon(c(tout$year[pos],tout$year[pos[3:1]]),c(tout$min[pos],tout$max[pos[3:1]]),col=cols.fill[1],border=NA)
@@ -422,19 +426,23 @@ tplot = function(tdata,title,ylim,tlegend=FALSE,xlabs='year') {
 	if (tlegend) legend('topleft',legend=c('SRES','Avoid 2030','Avoid 2016'),col=cols,pch=19,bty='n')
 }
 	
-pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
-	layout(matrix(c(1,1,2,3,1,1,4,5,1,1,6,7),nr=3,byrow=TRUE))
-	par(mar=c(4,4,1,1))
+#pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
+#pdf('fig2.pdf',width=7.2,height=3.6*3,pointsize=11)
+png('fig2.png',width=7.2,height=3.6*3,units='cm',pointsize=5,res=300)
+
+	par(mar=c(4,4,1,1),mfrow=c(3,2),cex=1)
+	# layout(matrix(c(1,1,2,3,1,1,4,5,1,1,6,7),nr=3,byrow=TRUE))
+	# par(mar=c(4,4,1,1))
 	
-	###first plot is all species
+	##first plot is all species
 	status = allspp.status; tdata = allspp;
 	n = length(unique(tdata$spp)) #define the data
 	cois = c(grep('vu',names(status)))
-	##make values cumlative
+	make values cumlative
 	status$cur.real.disp.cr = status$cur.real.disp.cr + status$cur.real.disp.ex
 	status$cur.real.disp.en = status$cur.real.disp.en + status$cur.real.disp.cr
 	status$cur.real.disp.vu = status$cur.real.disp.vu + status$cur.real.disp.en
-	##continue
+	continue
 	status[,cois] = status[,cois]/n #make this proportionate
 	#create some summary stats for plotting
 	status.mean = aggregate(status[,cois],list(ES=status$ES,year=status$year),mean)
@@ -443,7 +451,7 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
 	ylims = ylim=c(0,max(as.vector(status.max[,grep('vu',names(status.max))]),na.rm=TRUE))
-	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=TRUE)
+	# tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=TRUE)
 
 	### plot is plants
 	status = plant.status; tdata = plant;
@@ -462,7 +470,7 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
 	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
-	legend('topleft',legend='Plant',bty='n')
+	legend('topleft',legend='Plant',bty='n',cex=1.5)
 
 	### plot is animal
 	status = animal.status; tdata = animal;
@@ -480,8 +488,8 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min = status.max = status.mean
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
-	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
-	legend('topleft',legend='Animal',bty='n')	
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ',ylabs=' ')
+	legend('topleft',legend='Animal',bty='n',cex=1.5)	
 
 	### plot is plants
 	status = amph.status; tdata = amph;
@@ -500,7 +508,7 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
 	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
-	legend('topleft',legend='Amphibia',bty='n')
+	legend('topleft',legend='Amphibia',bty='n',cex=1.5)
 
 	### plot is plants
 	status = aves.status; tdata = aves;
@@ -518,8 +526,8 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min = status.max = status.mean
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
-	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ')
-	legend('topleft',legend='Aves',bty='n')	
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,xlabs=' ',ylabs=' ')
+	legend('topleft',legend='Aves',bty='n',cex=1.5)	
 	
 	### plot is plants
 	status = mamm.status; tdata = mamm;
@@ -538,7 +546,7 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
 	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE)
-	legend('topleft',legend='Mammalia',bty='n')
+	legend('topleft',legend='Mammalia',bty='n',cex=1.5)
 	
 	### plot is plants
 	status = rept.status; tdata = rept;
@@ -556,8 +564,10 @@ pdf('fig2.pdf',width=7.2,height=3.6,pointsize=9)
 	status.min = status.max = status.mean
 	status.min[,3:5] = status.mean[,3:5] - status.sd[,3:5]; for (ii in 3:5) status.min[which(status.min[ii]<0),ii] = 0
 	status.max[,3:5] = status.mean[,3:5] + status.sd[,3:5]
-	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE)
-	legend('topleft',legend='Reptilia',bty='n')
+	tplot(status[,c('ES','GCM','year','cur.real.disp.vu')],title=' ',ylim=ylims,tlegend=FALSE,ylabs=' ')
+	legend('topleft',legend='Reptilia',bty='n',cex=1.5)
+
+
 dev.off()
 		
 
