@@ -1,14 +1,13 @@
 #define & set the working directory
-pbs.dir = '/home/uqvdwj/WallaceInitiative/tmp.pbs/'; dir.create(pbs.dir); setwd(pbs.dir); system('rm -rf *')
+pbs.dir = '/home/jc165798/tmp.pbs/'; dir.create(pbs.dir); setwd(pbs.dir); system('rm -rf *')
 
 #define the script to run
-script2run = "/home/uqvdwj/SCRIPTS/WallaceInitiative/HPC/021.script2run.R"
+script2run = "/home/jc165798/SCRIPTS/WallaceInitiative/HPC/021.script2run.R"
 
 #define the model directory
-model.dir = '/home/uqvdwj/WallaceInitiative/models/'
+model.dir = '/home/jc165798/working/WallaceInitiative_1.0/models/'
 
-#list the taxonomic groups of species
-groups = list.files(model.dir)
+groups = list.files(model.dir)#list the taxonomic groups of species
 
 #defien the names of the files
 tnames = c('no.disp.sum.csv.gz','no.disp.loss.csv.gz','real.sum.csv.gz','real.loss.csv.gz','real.gain.csv.gz','opt.sum.csv.gz','opt.loss.csv.gz','opt.gain.csv.gz')
