@@ -10,6 +10,10 @@ for(i in 1:length(args)) {
 # group="amphibia"
 # fam="Ambystomatidae"
 
+##OR
+# group="plantae"
+# fam="Amborellaceae"
+
 ################################################################################
 # load libraries and add functions
 library(SDMTools)
@@ -30,7 +34,7 @@ mask = read.asc.gz(paste(train.dir,'mask.asc.gz',sep=''))
 #get a list of species to be summariezed
 species = list.files(paste(base.dir,'models/',group,'/',fam,sep=''))
 #define the output dir for the species GIS files
-spp.out.dir = paste(base.dir,'summaries/GIS/species/',group,'/',fam,'/',sep=''); dir.create(spp.out.dir,recursive=TRUE)
+#spp.out.dir = paste(base.dir,'summaries/GIS/species/',group,'/',fam,'/',sep=''); dir.create(spp.out.dir,recursive=TRUE)
 
 #data to be tracked
 out.area = NULL #this is the output of the areas
@@ -88,27 +92,30 @@ for (spp in species) { cat(spp,'\n')
 	}
 }
 
-#write out some of the data
-write.csv(out.area,gzfile('area/predicted.area.csv.gz'),row.names=FALSE) #write out the area information
-write.csv(no.sum,gzfile('richness/no.disp.sum.csv.gz'),row.names=FALSE)
-write.csv(no.loss,gzfile('richness/no.disp.loss.csv.gz'),row.names=FALSE)
-write.csv(real.sum,gzfile('richness/real.sum.csv.gz'),row.names=FALSE)
-write.csv(real.loss,gzfile('richness/real.loss.csv.gz'),row.names=FALSE)
-write.csv(real.gain,gzfile('richness/real.gain.csv.gz'),row.names=FALSE)
-write.csv(opt.sum,gzfile('richness/opt.sum.csv.gz'),row.names=FALSE)
-write.csv(opt.loss,gzfile('richness/opt.loss.csv.gz'),row.names=FALSE)
-write.csv(opt.gain,gzfile('richness/opt.gain.csv.gz'),row.names=FALSE)
+if (!any(is.null(out.area),is.null(no.sum),is.null(no.loss),is.null(real.sum),is.null(real.loss),is.null(real.gain),is.null(opt.sum),is.null(opt.loss),is.null(opt.gain))) {
+	if (sum(rowSums(real.sum))>0) {
+		#write out some of the data
+		write.csv(out.area,gzfile('area/predicted.area.csv.gz'),row.names=FALSE) #write out the area information
+		write.csv(no.sum,gzfile('richness/no.disp.sum.csv.gz'),row.names=FALSE)
+		write.csv(no.loss,gzfile('richness/no.disp.loss.csv.gz'),row.names=FALSE)
+		write.csv(real.sum,gzfile('richness/real.sum.csv.gz'),row.names=FALSE)
+		write.csv(real.loss,gzfile('richness/real.loss.csv.gz'),row.names=FALSE)
+		write.csv(real.gain,gzfile('richness/real.gain.csv.gz'),row.names=FALSE)
+		write.csv(opt.sum,gzfile('richness/opt.sum.csv.gz'),row.names=FALSE)
+		write.csv(opt.loss,gzfile('richness/opt.loss.csv.gz'),row.names=FALSE)
+		write.csv(opt.gain,gzfile('richness/opt.gain.csv.gz'),row.names=FALSE)
 
-################################################################################
-# copying data back to /home
+		################################################################################
+		# copying data back to /home
 
-#first the area info
-out.dir = paste(base.dir,'summaries/area/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
-file.copy('area/predicted.area.csv.gz',paste(out.dir,'predicted.area.csv.gz',sep=''),overwrite=TRUE)
-#now for the richness info
-out.dir = paste(base.dir,'summaries/richness/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
-file.copy(list.files('richness',pattern='csv.gz',full.names=TRUE),out.dir,overwrite=TRUE)
-
+		#first the area info
+		out.dir = paste(base.dir,'summaries/area/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
+		file.copy('area/predicted.area.csv.gz',paste(out.dir,'predicted.area.csv.gz',sep=''),overwrite=TRUE)
+		#now for the richness info
+		out.dir = paste(base.dir,'summaries/richness/family/',group,'/',fam,'/',sep=''); dir.create(out.dir,recursive=TRUE)
+		file.copy(list.files('richness',pattern='csv.gz',full.names=TRUE),out.dir,overwrite=TRUE)
+	}
+}
 ################################################################################
 # clean up 
 
