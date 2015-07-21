@@ -1,0 +1,1 @@
+Summary of R scripts created by the Wallace Initiative partners for species distributions modeling using Maxent.
